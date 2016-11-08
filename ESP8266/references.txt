@@ -1,0 +1,24 @@
+//display
+https://github.com/adafruit/Adafruit-GFX-Library
+https://github.com/adafruit/Adafruit_SSD1306
+http://www.instructables.com/id/Wemos-D1-Mini-096-SSD1306-OLED-Display-Using-SPI/
+
+//time
+https://www.hackster.io/rayburne/nist-date-amp-time-with-esp8266-and-oled-display-e8b9a9
+https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266WiFi/examples/NTPClient/NTPClient.ino
+http://woodsgood.ca/projects/2016/02/21/ntp-synchronized-oled-clock/
+https://github.com/jandelgado/arduino/wiki/SSD1306-based-OLED-connected-to-Arduino
+
+//sleeping esp8266
+https://learn.sparkfun.com/tutorials/esp8266-thing-hookup-guide/example-sketch-goodnight-thing-sleep-mode
+
+//read write SQL
+http://www.esp8266.com/viewtopic.php?f=6&t=5780
+http://afterhoursengineering.net/blog/blog/2015/04/11/esp8266-read-and-write-data-to-a-database/
+http://stackoverflow.com/questions/20933327/arduino-control-led-via-wifi-based-on-mysql-database-value
+https://primalcortex.wordpress.com/2015/02/19/esp8266-logging-data-in-a-mysql-database/
+http://www.whatimade.today/esp8266-easiest-way-to-program-so-far/
+
+//arduino button press
+http://www.instructables.com/id/Arduino-Stopwatch/
+http://www.gadgetronicx.com/arduino-based-voting-system/
