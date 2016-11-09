@@ -22,3 +22,18 @@ http://www.whatimade.today/esp8266-easiest-way-to-program-so-far/
 //arduino button press
 http://www.instructables.com/id/Arduino-Stopwatch/
 http://www.gadgetronicx.com/arduino-based-voting-system/
+
+
+//SQL
+ SELECT location FROM kpi_mech.task_db WHERE Assignee = 'jomar' AND Severity <= 1 limit 1;
+
+* look for serverity and status is 1
+SELECT location FROM kpi_mech.task_db WHERE Assignee = 'jomar' AND Status = 1 ORDER BY Severity ASC limit 1; 
+
+
+//status
+0 = reported
+1 = assigned
+2 = start
+3 = end
+4 = completed 
