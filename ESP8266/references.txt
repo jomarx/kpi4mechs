@@ -37,3 +37,7 @@ SELECT location FROM kpi_mech.task_db WHERE Assignee = 'jomar' AND Status = 1 OR
 2 = start
 3 = end
 4 = completed 
+
+
+//pc at NTP server
+https://social.technet.microsoft.com/Forums/windowsserver/en-US/ffb1df0b-7c6e-4b2d-8fdf-b4ca0c014266/configuring-windows-7-as-an-ntp-server?forum=winserverPN

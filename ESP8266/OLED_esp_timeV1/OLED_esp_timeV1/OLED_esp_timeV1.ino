@@ -115,7 +115,8 @@ MySQL_Connection conn((Client *)&client);
 char ssid[] = "jomarAP-SP";  //  your network SSID (name)
 char pass[] = "maquinay1";       // your network password
 // const char* host = "utcnist2.colorado.edu";
-const char* host = "128.138.141.172";
+//const char* host = "128.138.141.172";
+const char* host = "192.168.42.143"; //laptop NTP server
 
 int ln = 0;
 String TimeDate = "";
