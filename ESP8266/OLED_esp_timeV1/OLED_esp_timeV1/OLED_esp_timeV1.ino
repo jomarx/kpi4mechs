@@ -97,7 +97,8 @@ Modified by: f41ardu for use with nodemcu
 #include <MySQL_Cursor.h>
 
 
-IPAddress server_addr(192,168,42,143); // IP of the MySQL server here
+IPAddress server_addr(192,168,143,132); // IP of the MySQL server here
+//IPAddress server_addr(192,168,42,143); // IP of the MySQL server here
 char user[] = "nodemcu1"; // MySQL user login username
 char password[] = "secret"; // MySQL user login password
 
@@ -112,11 +113,13 @@ MySQL_Connection conn((Client *)&client);
 
 
 //wifi
-char ssid[] = "jomarAP-SP";  //  your network SSID (name)
-char pass[] = "maquinay1";       // your network password
+char ssid[] = "outsourcing1.25s"; // your SSID
+char pass[] = "dbafe12345!!!"; // your SSID Password
+//char ssid[] = "jomarAP-SP";  //  your network SSID (name)
+//char pass[] = "maquinay1";       // your network password
 // const char* host = "utcnist2.colorado.edu";
 //const char* host = "128.138.141.172";
-const char* host = "192.168.42.143"; //laptop NTP server
+const char* host = "192.168.142.132"; //laptop NTP server
 
 int ln = 0;
 String TimeDate = "";
@@ -152,12 +155,40 @@ WiFiUDP udp;
 
 Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
 
+//buzzer
+const int buzzer = D0;
+
 void setup()   {  
+
+//  Serial.begin(9600);
+  display.begin(SSD1306_SWITCHCAPVCC);
+  display.display();
+  delay(1000);
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+
+display.clearDisplay();
+display.setCursor(0,0);
+
+//buzzer initialize
+//need to develop beep function
+  for (int buzzerTimer = 0; buzzerTimer <= 3; buzzerTimer++){
+  tone(buzzer, 5000); // Send 5KHz sound signal...
+  delay(100);        // ...for .1 sec
+  noTone(buzzer);     // Stop sound...
+  delay(100);        // ...for .1sec
+  }
 
 //start NTP
 Serial.begin(115200);
   Serial.println();
   Serial.println();
+
+display.clearDisplay();
+display.setCursor(0,0);
+display.print("connecting to WIFI..\n");
+display.display();
 
   // We start by connecting to a WiFi network
   Serial.print("Connecting to ");
@@ -169,7 +200,14 @@ Serial.begin(115200);
     Serial.print(".");
   }
   Serial.println("");
-  
+
+display.clearDisplay();
+display.setCursor(0,0);
+display.print("WIFI Connected!\n");
+display.print(WiFi.localIP());
+display.print("\n");
+display.display();
+
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
@@ -179,33 +217,23 @@ Serial.begin(115200);
   Serial.print("Local port: ");
   Serial.println(udp.localPort());
 //end NTP
-
                 
-//  Serial.begin(9600);
-  display.begin(SSD1306_SWITCHCAPVCC);
-  display.display();
-  delay(1000);
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-
 //start SQL DB connection
 Serial.println("DB - Connecting...");
+display.print("DB - Connecting\n");
+display.display();
 while (conn.connect(server_addr, 3306, user, password) != true) {
 delay(500);
 Serial.print ( "." );
 }
+display.print("SQL connected!\n");
+display.display();
 
  }
 
 void loop()
 {
-
-display.clearDisplay();
-display.setCursor(0,0);
-
-  //NTP start
-
+//NTP start
 //get a random server from the pool
   WiFi.hostByName(ntpServerName, timeServerIP); 
 
@@ -216,6 +244,11 @@ display.setCursor(0,0);
   int cb = udp.parsePacket();
   if (!cb) {
     Serial.println("no packet yet");
+    display.clearDisplay();
+    display.setCursor(0,0);
+    display.print("\n");
+    display.display();
+
   }
   else {
     Serial.print("packet received, length=");
@@ -260,8 +293,8 @@ display.setCursor(0,0);
     }
     Serial.println(epoch % 60); // print the second
     //mod
-int tz = 8;                                            // adjust for PH time
 
+int tz = 8;                                            // adjust for PH time
       DateTime gt(epoch + (tz*60*60));                       // obtain date & time based on NTP-derived epoch...
       DateTime ntime(epoch + (tz*60*60));                    // if in DST correct for GMT-4 hours else GMT-5
       RTC.adjust(ntime);                                     // and set RTC to correct local time   
@@ -283,6 +316,9 @@ int tz = 8;                                            // adjust for PH time
       if(nyr < 10) Serial.print(F("0")); Serial.println(nyr);          // print the year
       Serial.println();
 
+display.clearDisplay();
+display.setCursor(0,0);
+
       if(nh < 10) display.print(F(" ")); display.print(nh);  display.print(F(":"));          // print the hour 
       if(nm < 10) display.print(F("0")); display.print(nm);  display.print(F(":"));          // print the minute
       if(ns < 10) display.print(F("0")); display.print(ns);                       // print the second
@@ -293,6 +329,7 @@ int tz = 8;                                            // adjust for PH time
       if(nyr < 10) display.print(F("0")); display.print(nyr);          // print the year
       display.println();      
 
+display.display();
 //mod end
   }
   // wait ten seconds before asking for the time again
