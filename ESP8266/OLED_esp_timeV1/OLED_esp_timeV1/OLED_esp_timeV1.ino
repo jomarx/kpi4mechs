@@ -97,8 +97,8 @@ Modified by: f41ardu for use with nodemcu
 #include <MySQL_Cursor.h>
 
 
-IPAddress server_addr(192,168,143,132); // IP of the MySQL server here
-//IPAddress server_addr(192,168,42,143); // IP of the MySQL server here
+//IPAddress server_addr(192,168,143,132); // IP of the MySQL server here
+IPAddress server_addr(192,168,42,143); // IP of the MySQL server here
 char user[] = "nodemcu1"; // MySQL user login username
 char password[] = "secret"; // MySQL user login password
 
@@ -113,13 +113,13 @@ MySQL_Connection conn((Client *)&client);
 
 
 //wifi
-char ssid[] = "outsourcing1.25s"; // your SSID
-char pass[] = "dbafe12345!!!"; // your SSID Password
-//char ssid[] = "jomarAP-SP";  //  your network SSID (name)
-//char pass[] = "maquinay1";       // your network password
+//char ssid[] = "outsourcing1.25s"; // your SSID
+//char pass[] = "dbafe12345!!!"; // your SSID Password
+char ssid[] = "jomarAP-SP";  //  your network SSID (name)
+char pass[] = "maquinay1";       // your network password
 // const char* host = "utcnist2.colorado.edu";
 //const char* host = "128.138.141.172";
-const char* host = "192.168.142.132"; //laptop NTP server
+const char* host = "192.168.42.143"; //laptop NTP server
 
 int ln = 0;
 String TimeDate = "";
@@ -158,48 +158,49 @@ Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
 //buzzer
 const int buzzer = D0;
 
-void setup()   {  
+void setup(){  
 
 //  Serial.begin(9600);
-  display.begin(SSD1306_SWITCHCAPVCC);
-  display.display();
-  delay(1000);
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
+display.begin(SSD1306_SWITCHCAPVCC);
+display.display();
+delay(1000);
+display.clearDisplay();
+display.setTextSize(1);
+display.setTextColor(WHITE);
 
 display.clearDisplay();
 display.setCursor(0,0);
 
 //buzzer initialize
-//need to develop beep function
-  for (int buzzerTimer = 0; buzzerTimer <= 3; buzzerTimer++){
-  tone(buzzer, 5000); // Send 5KHz sound signal...
-  delay(100);        // ...for .1 sec
-  noTone(buzzer);     // Stop sound...
-  delay(100);        // ...for .1sec
-  }
+buzzerFunction(3);
 
 //start NTP
 Serial.begin(115200);
-  Serial.println();
-  Serial.println();
+Serial.println();
+Serial.println();
 
 display.clearDisplay();
 display.setCursor(0,0);
 display.print("connecting to WIFI..\n");
 display.display();
 
-  // We start by connecting to a WiFi network
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, pass);
-  
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+// We start by connecting to a WiFi network
+Serial.print("Connecting to ");
+Serial.println(ssid);
+WiFi.begin(ssid, pass);
+
+int ResetCounter = 0;
+while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
     Serial.print(".");
-  }
-  Serial.println("");
+    Serial.print(ResetCounter);
+    ResetCounter++;
+    if (ResetCounter >= 30) {
+      ESP.reset();
+      }
+}
+  
+Serial.println("");
 
 display.clearDisplay();
 display.setCursor(0,0);
@@ -208,14 +209,14 @@ display.print(WiFi.localIP());
 display.print("\n");
 display.display();
 
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+Serial.println("WiFi connected");
+Serial.println("IP address: ");
+Serial.println(WiFi.localIP());
 
-  Serial.println("Starting UDP");
-  udp.begin(localPort);
-  Serial.print("Local port: ");
-  Serial.println(udp.localPort());
+Serial.println("Starting UDP");
+udp.begin(localPort);
+Serial.print("Local port: ");
+Serial.println(udp.localPort());
 //end NTP
                 
 //start SQL DB connection
@@ -223,16 +224,15 @@ Serial.println("DB - Connecting...");
 display.print("DB - Connecting\n");
 display.display();
 while (conn.connect(server_addr, 3306, user, password) != true) {
-delay(500);
-Serial.print ( "." );
-}
+    delay(500);
+    Serial.print ( "." );
+    }
+    
 display.print("SQL connected!\n");
 display.display();
+}
 
- }
-
-void loop()
-{
+void loop(){
 //NTP start
 //get a random server from the pool
   WiFi.hostByName(ntpServerName, timeServerIP); 
@@ -248,50 +248,48 @@ void loop()
     display.setCursor(0,0);
     display.print("\n");
     display.display();
-
-  }
-  else {
-    Serial.print("packet received, length=");
-    Serial.println(cb);
-    // We've received a packet, read the data from it
-    udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
-
-    //the timestamp starts at byte 40 of the received packet and is four bytes,
-    // or two words, long. First, esxtract the two words:
-
-    unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-    unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
-    // combine the four bytes (two words) into a long integer
-    // this is NTP time (seconds since Jan 1 1900):
-    unsigned long secsSince1900 = highWord << 16 | lowWord;
-    Serial.print("Seconds since Jan 1 1900 = " );
-    Serial.println(secsSince1900);
-
-    // now convert NTP time into everyday time:
-    Serial.print("Unix time = ");
-    // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
-    const unsigned long seventyYears = 2208988800UL;
-    // subtract seventy years:
-    unsigned long epoch = secsSince1900 - seventyYears;
-    // print Unix time:
-    Serial.println(epoch);
-
-
-    // print the hour, minute and second:
-    Serial.print("The UTC time is ");       // UTC is the time at Greenwich Meridian (GMT)
-    Serial.print((epoch  % 86400L) / 3600); // print the hour (86400 equals secs per day)
-    Serial.print(':');
-    if ( ((epoch % 3600) / 60) < 10 ) {
-      // In the first 10 minutes of each hour, we'll want a leading '0'
-      Serial.print('0');
-    }
-    Serial.print((epoch  % 3600) / 60); // print the minute (3600 equals secs per minute)
-    Serial.print(':');
-    if ( (epoch % 60) < 10 ) {
-      // In the first 10 seconds of each minute, we'll want a leading '0'
-      Serial.print('0');
-    }
-    Serial.println(epoch % 60); // print the second
+    } else {
+      Serial.print("packet received, length=");
+      Serial.println(cb);
+      // We've received a packet, read the data from it
+      udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
+  
+      //the timestamp starts at byte 40 of the received packet and is four bytes,
+      // or two words, long. First, esxtract the two words:
+  
+      unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
+      unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
+      // combine the four bytes (two words) into a long integer
+      // this is NTP time (seconds since Jan 1 1900):
+      unsigned long secsSince1900 = highWord << 16 | lowWord;
+      Serial.print("Seconds since Jan 1 1900 = " );
+      Serial.println(secsSince1900);
+  
+      // now convert NTP time into everyday time:
+      Serial.print("Unix time = ");
+      // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
+      const unsigned long seventyYears = 2208988800UL;
+      // subtract seventy years:
+      unsigned long epoch = secsSince1900 - seventyYears;
+      // print Unix time:
+      Serial.println(epoch);
+  
+  
+      // print the hour, minute and second:
+      Serial.print("The UTC time is ");       // UTC is the time at Greenwich Meridian (GMT)
+      Serial.print((epoch  % 86400L) / 3600); // print the hour (86400 equals secs per day)
+      Serial.print(':');
+      if ( ((epoch % 3600) / 60) < 10 ) {
+        // In the first 10 minutes of each hour, we'll want a leading '0'
+        Serial.print('0');
+      }
+      Serial.print((epoch  % 3600) / 60); // print the minute (3600 equals secs per minute)
+      Serial.print(':');
+      if ( (epoch % 60) < 10 ) {
+        // In the first 10 seconds of each minute, we'll want a leading '0'
+        Serial.print('0');
+      }
+      Serial.println(epoch % 60); // print the second
     //mod
 
 int tz = 8;                                            // adjust for PH time
@@ -368,6 +366,7 @@ row_values *row = NULL;
   display.print("prob loc: ");
   display.print(head_count);
   display.display();
+  buzzerFunction(1);
   
   //sleep for 1min
   //ESP.deepSleep(60000000);
@@ -375,11 +374,18 @@ row_values *row = NULL;
   
 }
 
+int buzzerFunction(int counter){
+  for (int buzzerTimer = 1; buzzerTimer <= counter; buzzerTimer++){
+  tone(buzzer, 5000); // Send 5KHz sound signal...
+  delay(100);        // ...for .1 sec
+  noTone(buzzer);     // Stop sound...
+  delay(100);        // ...for .1sec
+  }
+}
 
 
 // send an NTP request to the time server at the given address
-unsigned long sendNTPpacket(IPAddress& address)
-{
+unsigned long sendNTPpacket(IPAddress& address){
   Serial.println("sending NTP packet...");
   // set all bytes in the buffer to 0
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
