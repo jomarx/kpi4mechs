@@ -168,8 +168,7 @@ display.clearDisplay();
 display.setTextSize(1);
 display.setTextColor(WHITE);
 
-display.clearDisplay();
-display.setCursor(0,0);
+displayClear();
 
 //buzzer initialize
 buzzerFunction(3);
@@ -179,8 +178,7 @@ Serial.begin(115200);
 Serial.println();
 Serial.println();
 
-display.clearDisplay();
-display.setCursor(0,0);
+displayClear();
 display.print("connecting to WIFI..\n");
 display.display();
 
@@ -196,14 +194,13 @@ while (WiFi.status() != WL_CONNECTED) {
     Serial.print(ResetCounter);
     ResetCounter++;
     if (ResetCounter >= 30) {
-      ESP.reset();
+      ESP.restart();
       }
 }
   
 Serial.println("");
 
-display.clearDisplay();
-display.setCursor(0,0);
+displayClear();
 display.print("WIFI Connected!\n");
 display.print(WiFi.localIP());
 display.print("\n");
@@ -244,8 +241,7 @@ void loop(){
   int cb = udp.parsePacket();
   if (!cb) {
     Serial.println("no packet yet");
-    display.clearDisplay();
-    display.setCursor(0,0);
+    displayClear();
     display.print("\n");
     display.display();
     } else {
@@ -314,8 +310,7 @@ int tz = 8;                                            // adjust for PH time
       if(nyr < 10) Serial.print(F("0")); Serial.println(nyr);          // print the year
       Serial.println();
 
-display.clearDisplay();
-display.setCursor(0,0);
+displayClear();
 
       if(nh < 10) display.print(F(" ")); display.print(nh);  display.print(F(":"));          // print the hour 
       if(nm < 10) display.print(F("0")); display.print(nm);  display.print(F(":"));          // print the minute
@@ -372,6 +367,11 @@ row_values *row = NULL;
   //ESP.deepSleep(60000000);
   delay(1000*60);
   
+}
+
+int displayClear() {
+display.clearDisplay();
+display.setCursor(0,0);
 }
 
 int buzzerFunction(int counter){
