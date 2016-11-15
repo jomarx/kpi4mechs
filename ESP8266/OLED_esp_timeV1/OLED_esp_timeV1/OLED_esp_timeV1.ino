@@ -156,14 +156,24 @@ WiFiUDP udp;
 Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
 
 //buzzer
-const int buzzer = D0;
+const int buzzer = D8;
+
+//button
+const int startButton = D1;
+const int cancelButton = D7;
+int buttonState1 = 1;
+int buttonState2 = 1;
+
 
 void setup(){  
+
+pinMode(startButton, INPUT_PULLUP);
+pinMode(cancelButton, INPUT_PULLUP);
 
 //  Serial.begin(9600);
 display.begin(SSD1306_SWITCHCAPVCC);
 display.display();
-delay(1000);
+delayer(1);
 display.clearDisplay();
 display.setTextSize(1);
 display.setTextColor(WHITE);
@@ -189,12 +199,13 @@ WiFi.begin(ssid, pass);
 
 int ResetCounter = 0;
 while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
+    delay(500);
     Serial.print(".");
     Serial.print(ResetCounter);
     ResetCounter++;
     if (ResetCounter >= 30) {
-      ESP.restart();
+		Serial.print("ESP8266 reset!");
+		ESP.restart();
       }
 }
   
@@ -215,14 +226,22 @@ udp.begin(localPort);
 Serial.print("Local port: ");
 Serial.println(udp.localPort());
 //end NTP
-                
+ 
 //start SQL DB connection
 Serial.println("DB - Connecting...");
 display.print("DB - Connecting\n");
 display.display();
+
+ResetCounter = 0;
 while (conn.connect(server_addr, 3306, user, password) != true) {
-    delay(500);
+	delay(800);
     Serial.print ( "." );
+    Serial.print(ResetCounter);
+    ResetCounter++;
+    if (ResetCounter >= 60) {
+		Serial.print("ESP8266 reset!");
+		ESP.restart();
+      }
     }
     
 display.print("SQL connected!\n");
@@ -232,19 +251,19 @@ display.display();
 void loop(){
 //NTP start
 //get a random server from the pool
-  WiFi.hostByName(ntpServerName, timeServerIP); 
+WiFi.hostByName(ntpServerName, timeServerIP); 
 
-  sendNTPpacket(timeServerIP); // send an NTP packet to a time server
-  // wait to see if a reply is available
-  delay(1000);
+sendNTPpacket(timeServerIP); // send an NTP packet to a time server
+// wait to see if a reply is available
+delay(500);
   
-  int cb = udp.parsePacket();
+int cb = udp.parsePacket();
   if (!cb) {
-    Serial.println("no packet yet");
-    displayClear();
-    display.print("\n");
-    display.display();
-    } else {
+	  Serial.println("no packet yet");
+	  displayClear();
+	  display.print("\n");
+	  display.display();
+	  } else {
       Serial.print("packet received, length=");
       Serial.println(cb);
       // We've received a packet, read the data from it
@@ -324,49 +343,83 @@ displayClear();
 
 display.display();
 //mod end
-  }
-  // wait ten seconds before asking for the time again
-  delay(10000);
+}
 
-  //NTP End
-
-delay(2000);
+//NTP End
 row_values *row = NULL;
- long head_count = 0;
- //char head_count
- delay(1000);
- Serial.println("1) Demonstrating using a cursor dynamically allocated.");
- // Initiate the query class instance
- MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
- // Execute the query
- cur_mem->execute(query);
- // Fetch the columns (required) but we don't use them.
- column_names *columns = cur_mem->get_columns();
- // Read the row (we are only expecting the one)
- do {
-  row = cur_mem->get_next_row();
-  if (row != NULL) {
-    head_count = atol(row->values[0]);
-    }
-  } while (row != NULL);
- // Deleting the cursor also frees up memory used
- delete cur_mem;
- // Show the result
- Serial.print(" NYC pop = ");
- Serial.println(head_count);
+long head_count = 0;
+//char head_count
+delay(500);
+Serial.println("1) Demonstrating using a cursor dynamically allocated.");
+// Initiate the query class instance
+MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
+// Execute the query
+cur_mem->execute(query);
+// Fetch the columns (required) but we don't use them.
+column_names *columns = cur_mem->get_columns();
+// Read the row (we are only expecting the one)
+do {
+	row = cur_mem->get_next_row();
+	if (row != NULL) {
+		head_count = atol(row->values[0]);
+		}
+	} while (row != NULL);
+// Deleting the cursor also frees up memory used
+delete cur_mem;
+// Show the result
+Serial.print(" NYC pop = ");
+Serial.println(head_count);
   
   //screen
-  display.print("123456789012345678901\n");
-  display.print("Hanesbrand \n");
-  display.print("prob loc: ");
-  display.print(head_count);
-  display.display();
-  buzzerFunction(1);
-  
+display.print("123456789012345678901\n");
+display.print("Hanesbrand \n");
+display.print("prob loc: ");
+display.print(head_count);
+display.display();
+ buzzerFunction(1);
+
+int taposNa = 0;
+Serial.println("Starting loop");
+ 
+while (taposNa < 1) {
+	buttonState1 = digitalRead(startButton);
+	buttonState2 = digitalRead(cancelButton);
+	Serial.print("value of taposNa: ");
+	Serial.println(taposNa);
+	Serial.println(buttonState1);
+	Serial.println(buttonState2);
+
+	Serial.println("looping");
+	if (buttonState1 == LOW && buttonState2 == HIGH){
+		Serial.print("start!!");
+		buzzerFunction(2);
+		taposNa = 2;
+	}
+	if (buttonState1 == HIGH && buttonState2 == LOW){
+		Serial.print("cancel!!");
+		buzzerFunction(4);
+		taposNa = 2;	
+	}
+	delay(50);
+}
+  	Serial.println("out of loop");
+	
+//reset button state
+buttonState1 = 1;
+buttonState2 = 1;
+
   //sleep for 1min
   //ESP.deepSleep(60000000);
-  delay(1000*60);
+  delayer(60);
   
+}
+
+int delayer(int dly){
+	for (int DelayDaw = 0; DelayDaw <= dly; DelayDaw++){
+		delay(1000);
+		Serial.print(DelayDaw);
+		Serial.print(".");
+	}
 }
 
 int displayClear() {
