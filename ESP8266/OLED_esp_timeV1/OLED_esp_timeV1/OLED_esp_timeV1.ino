@@ -98,7 +98,7 @@ Modified by: f41ardu for use with nodemcu
 
 
 //IPAddress server_addr(192,168,143,132); // IP of the MySQL server here
-IPAddress server_addr(192,168,42,143); // IP of the MySQL server here
+IPAddress server_addr(192,168,42,85); // IP of the MySQL server here
 char user[] = "nodemcu1"; // MySQL user login username
 char password[] = "secret"; // MySQL user login password
 
@@ -119,7 +119,7 @@ char ssid[] = "jomarAP-SP";  //  your network SSID (name)
 char pass[] = "maquinay1";       // your network password
 // const char* host = "utcnist2.colorado.edu";
 //const char* host = "128.138.141.172";
-const char* host = "192.168.42.143"; //laptop NTP server
+const char* host = "192.168.42.85"; //laptop NTP server
 
 int ln = 0;
 String TimeDate = "";
@@ -368,10 +368,14 @@ do {
 delete cur_mem;
 // Show the result
 if (head_count == 0) {
-	display.print("No task,\n sleeping for 15mins");
+	display.print("No task,\n sleeping for 10mins");
 	display.display();
 	buzzerFunction(1);
-	ESP.deepSleep(60000000);
+	delayer(5);
+	displayClear();
+	display.display();
+	delay(100);
+	ESP.deepSleep(60000000*10);
 	//sleep esp8266 for 15mins
 }
 
