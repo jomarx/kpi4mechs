@@ -235,7 +235,7 @@ display.display();
 ResetCounter = 0;
 while (conn.connect(server_addr, 3306, user, password) != true) {
 	delay(800);
-    Serial.print ( "." );
+    Serial.print( "." );
     Serial.print(ResetCounter);
     ResetCounter++;
     if (ResetCounter >= 60) {
@@ -344,8 +344,8 @@ displayClear();
 display.display();
 //mod end
 }
-
 //NTP End
+
 row_values *row = NULL;
 long head_count = 0;
 //char head_count
@@ -367,6 +367,14 @@ do {
 // Deleting the cursor also frees up memory used
 delete cur_mem;
 // Show the result
+if (head_count == 0) {
+	display.print("No task,\n sleeping for 15mins");
+	display.display();
+	buzzerFunction(1);
+	ESP.deepSleep(60000000);
+	//sleep esp8266 for 15mins
+}
+
 Serial.print(" NYC pop = ");
 Serial.println(head_count);
   
@@ -379,28 +387,65 @@ display.display();
  buzzerFunction(1);
 
 int taposNa = 0;
+int countToFifteen = 0;
+int countToMinute = 0;
+int MinLeft = 15;
 Serial.println("Starting loop");
  
 while (taposNa < 1) {
 	buttonState1 = digitalRead(startButton);
 	buttonState2 = digitalRead(cancelButton);
-	Serial.print("value of taposNa: ");
-	Serial.println(taposNa);
-	Serial.println(buttonState1);
-	Serial.println(buttonState2);
-
-	Serial.println("looping");
+		
 	if (buttonState1 == LOW && buttonState2 == HIGH){
 		Serial.print("start!!");
 		buzzerFunction(2);
 		taposNa = 2;
 	}
 	if (buttonState1 == HIGH && buttonState2 == LOW){
-		Serial.print("cancel!!");
+		Serial.print("cancel!! \n");
+		Serial.print("task should auto assign");
 		buzzerFunction(4);
 		taposNa = 2;	
 	}
+	if (countToMinute > 1200 ){
+			displayClear();
+			if(nh < 10) display.print(F(" ")); display.print(nh);  display.print(F(":"));          // print the hour 
+			if(nm < 10) display.print(F("0")); display.print(nm);  display.print(F(":"));          // print the minute
+			if(ns < 10) display.print(F("0")); display.print(ns);                       // print the second
+			display.print(F(" - "));                                        // Local date
+			if(nmo < 10) display.print(F("0")); display.print(nmo);  display.print(F("/"));        // print the month
+			if(ndy < 10) display.print(F("0")); display.print(ndy); display.print(F("/"));                   // print the day
+			if(nyr < 10) display.print(F("0")); display.print(nyr);          // print the year
+			display.println();
+			display.print("Sew Line #: ");
+			display.print(head_count);
+			display.print("\n");
+			display.print("ACK Time left : ");
+			display.print(MinLeft);
+			display.print("\n");
+			display.print("START           END");
+			MinLeft--;
+			countToMinute = 0;
+			display.display();
+			Serial.print("function to update DB, timeout");
+			buzzerFunction(5);
+	}
+	if (countToFifteen > 18000 ){
+		Serial.print("function to update DB, 15mins have past, auto assign");
+		buzzerFunction(5);
+		taposNa = 2;	
+	}
+
+	Serial.print(countToFifteen);
+	countToFifteen++;
+	countToMinute++;
 	delay(50);
+	
+	Serial.print("value of taposNa: ");
+	Serial.println(taposNa);
+	Serial.println(buttonState1);
+	Serial.println(buttonState2);
+	
 }
   	Serial.println("out of loop");
 	
