@@ -104,7 +104,8 @@ char password[] = "secret"; // MySQL user login password
 
 // Sample query
 //char query[] = "SELECT population FROM world.city WHERE name = 'New York'";
-char query[] = "SELECT location FROM kpi_mech.task_db WHERE Assignee = 'jomar' AND Status = 1 ORDER BY Severity ASC limit 1; ";
+char QUERY_POP[] = "SELECT ID, location FROM kpi_mech.task_db WHERE Assignee = 'jomar' AND Status = %lu ORDER BY Severity ASC limit 1; ";
+char query[128];
 
 WiFiClient client;
 
@@ -347,12 +348,20 @@ display.display();
 //NTP End
 
 row_values *row = NULL;
-long head_count = 0;
-//char head_count
+long taskID = 0;
+long cellLocation = 0;
+//char taskID
 delay(500);
-Serial.println("1) Demonstrating using a cursor dynamically allocated.");
+Serial.println("SQL query to search for available task");
 // Initiate the query class instance
 MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
+// Supply the parameter for the query
+// Here we use the QUERY_POP as the format string and query as the
+// destination. This uses twice the memory so another option would be
+// to allocate one buffer for all formatted queries or allocate the
+// memory as needed (just make sure you allocate enough memory and
+// free it when you're done!).
+sprintf(query, QUERY_POP, 1);
 // Execute the query
 cur_mem->execute(query);
 // Fetch the columns (required) but we don't use them.
@@ -361,34 +370,37 @@ column_names *columns = cur_mem->get_columns();
 do {
 	row = cur_mem->get_next_row();
 	if (row != NULL) {
-		head_count = atol(row->values[0]);
+		taskID = atol(row->values[0]);
+		Serial.print("value of taskID plus 1 = ");
+		Serial.println(taskID);
+		cellLocation = atol(row->values[1]);
+		Serial.print("value of cellLocation plus 1 = ");
+		Serial.println(cellLocation);
 		}
 	} while (row != NULL);
 // Deleting the cursor also frees up memory used
 delete cur_mem;
 // Show the result
-if (head_count == 0) {
-	display.print("No task,\n sleeping for 10mins");
-	Serial.println("No task,\n sleeping for 10mins");
+if (cellLocation == 0) {
+	display.print("No task,\n sleeping for 15mins");
+	Serial.println("No task,\n sleeping for 15mins");
 	display.display();
 	buzzerFunction(1);
 	delayer(5);
 	displayClear();
 	display.display();
 	delay(100);
-	ESP.deepSleep(60000000*10);
+	ESP.deepSleep(60000000*15);
 	//sleep esp8266 for 15mins
 	ESP.restart();
 }
-
-Serial.print(" NYC pop = ");
-Serial.println(head_count);
+ 
   
-  //screen
+//screen
 display.print("123456789012345678901\n");
 display.print("Hanesbrand \n");
 display.print("prob loc: ");
-display.print(head_count);
+display.print(taskID);
 display.display();
  buzzerFunction(1);
 
@@ -424,7 +436,7 @@ while (taposNa < 1) {
 			if(nyr < 10) display.print(F("0")); display.print(nyr);          // print the year
 			display.println();
 			display.print("Sew Line #: ");
-			display.print(head_count);
+			display.print(taskID);
 			display.print("\n");
 			display.print("ACK Time left : ");
 			display.print(MinLeft);
