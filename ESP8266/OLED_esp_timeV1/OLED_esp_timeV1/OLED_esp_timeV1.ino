@@ -369,6 +369,7 @@ delete cur_mem;
 // Show the result
 if (head_count == 0) {
 	display.print("No task,\n sleeping for 10mins");
+	Serial.println("No task,\n sleeping for 10mins");
 	display.display();
 	buzzerFunction(1);
 	delayer(5);
@@ -377,6 +378,7 @@ if (head_count == 0) {
 	delay(100);
 	ESP.deepSleep(60000000*10);
 	//sleep esp8266 for 15mins
+	ESP.restart();
 }
 
 Serial.print(" NYC pop = ");

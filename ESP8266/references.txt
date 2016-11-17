@@ -11,6 +11,7 @@ https://github.com/jandelgado/arduino/wiki/SSD1306-based-OLED-connected-to-Ardui
 
 //sleeping esp8266
 https://learn.sparkfun.com/tutorials/esp8266-thing-hookup-guide/example-sketch-goodnight-thing-sleep-mode
+https://github.com/esp8266/Arduino/issues/229
 
 //read write SQL
 http://www.esp8266.com/viewtopic.php?f=6&t=5780
