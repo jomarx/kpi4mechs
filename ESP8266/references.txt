@@ -31,6 +31,23 @@ http://www.gadgetronicx.com/arduino-based-voting-system/
 * look for serverity and status is 1
 SELECT location FROM kpi_mech.task_db WHERE Assignee = 'jomar' AND Status = 1 ORDER BY Severity ASC limit 1; 
 
+SELECT ID, location FROM kpi_mech.task_db WHERE Assignee = 'jomar' AND Status = 1 ORDER BY Severity ASC limit 1;
+
+*update status
+UPDATE tbl_name
+SET col_name1=expr1 [, col_name2=expr2 ...]
+[WHERE where_definition]
+
+* update status
+UPDATE kpi_mech.task_db SET Status = 2 WHERE ID = 1;
+
+*udate time
+UPDATE kpi_mech.task_db SET StartTime (Curtime()) WHERE ID = 1;
+
+
+
+INSERT INTO kpi_mech.task_db (message) VALUES ('Hello, Arduino!')
+
 
 //status
 0 = reported
@@ -38,6 +55,8 @@ SELECT location FROM kpi_mech.task_db WHERE Assignee = 'jomar' AND Status = 1 OR
 2 = start
 3 = end
 4 = completed 
+5 = camcelled
+6 = timeout
 
 
 //pc at NTP server

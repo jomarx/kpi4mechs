@@ -105,12 +105,20 @@ char password[] = "secret"; // MySQL user login password
 // Sample query
 //char query[] = "SELECT population FROM world.city WHERE name = 'New York'";
 char QUERY_POP[] = "SELECT ID, location FROM kpi_mech.task_db WHERE Assignee = 'jomar' AND Status = %lu ORDER BY Severity ASC limit 1; ";
-char query[128];
+char QUERY_UPDATE_2[] = "UPDATE kpi_mech.task_db SET Status = 2 WHERE ID = %lu; ";
+char QUERY_UPDATE_3[] = "UPDATE kpi_mech.task_db SET Status = 3 WHERE ID = %lu; ";
+char QUERY_UPDATE_5[] = "UPDATE kpi_mech.task_db SET Status = 5 WHERE ID = %lu; ";
+char QUERY_UPDATE_6[] = "UPDATE kpi_mech.task_db SET Status = 6 WHERE ID = %lu; ";
+char QUERY_STARTTIME[] = "UPDATE kpi_mech.task_db SET StartTime = (Curtime()) WHERE ID = %lu; ";
+char QUERY_ENDTIME[] = "UPDATE kpi_mech.task_db SET EndTime = (Curtime()) WHERE ID = %lu; ";
+char query[256];
+
+//SQL variables
+long taskID = 0;
+long cellLocation = 0;
 
 WiFiClient client;
-
 MySQL_Connection conn((Client *)&client);
-
 
 
 //wifi
@@ -164,6 +172,7 @@ const int startButton = D1;
 const int cancelButton = D7;
 int buttonState1 = 1;
 int buttonState2 = 1;
+
 
 
 void setup(){  
@@ -347,9 +356,8 @@ display.display();
 }
 //NTP End
 
+//SQL start
 row_values *row = NULL;
-long taskID = 0;
-long cellLocation = 0;
 //char taskID
 delay(500);
 Serial.println("SQL query to search for available task");
@@ -371,15 +379,18 @@ do {
 	row = cur_mem->get_next_row();
 	if (row != NULL) {
 		taskID = atol(row->values[0]);
-		Serial.print("value of taskID plus 1 = ");
+		Serial.print("value of taskID = ");
 		Serial.println(taskID);
 		cellLocation = atol(row->values[1]);
-		Serial.print("value of cellLocation plus 1 = ");
+		Serial.print("value of cellLocation = ");
 		Serial.println(cellLocation);
 		}
 	} while (row != NULL);
 // Deleting the cursor also frees up memory used
-delete cur_mem;
+//delete cur_mem;
+conn.close();
+
+
 // Show the result
 if (cellLocation == 0) {
 	display.print("No task,\n sleeping for 15mins");
@@ -394,36 +405,162 @@ if (cellLocation == 0) {
 	//sleep esp8266 for 15mins
 	ESP.restart();
 }
- 
   
 //screen
+/*
 display.print("123456789012345678901\n");
 display.print("Hanesbrand \n");
 display.print("prob loc: ");
 display.print(taskID);
 display.display();
- buzzerFunction(1);
+buzzerFunction(1);
+*/
+//task detected
 
-int taposNa = 0;
+int TNLeaveLoop = 0;
 int countToFifteen = 0;
 int countToMinute = 0;
 int MinLeft = 15;
-Serial.println("Starting loop");
+
+Serial.println("Starting loop, printing initial display");
+displayClear();
+if(nh < 10) display.print(F(" ")); display.print(nh);  display.print(F(":"));          // print the hour 
+if(nm < 10) display.print(F("0")); display.print(nm);  display.print(F(":"));          // print the minute
+if(ns < 10) display.print(F("0")); display.print(ns);                       // print the second
+display.print(F(" - "));                                        // Local date
+if(nmo < 10) display.print(F("0")); display.print(nmo);  display.print(F("/"));        // print the month
+if(ndy < 10) display.print(F("0")); display.print(ndy); display.print(F("/"));                   // print the day
+if(nyr < 10) display.print(F("0")); display.print(nyr);          // print the year
+display.println();
+display.print("Sew Line #: ");
+display.print(taskID);
+display.print("\n");
+display.print("ACK Time left : ");
+display.print(MinLeft);
+display.print("\n");
+display.print("START           END");
+display.display();
+buzzerFunction(5);
  
-while (taposNa < 1) {
+while (TNLeaveLoop < 1) {
 	buttonState1 = digitalRead(startButton);
 	buttonState2 = digitalRead(cancelButton);
 		
 	if (buttonState1 == LOW && buttonState2 == HIGH){
-		Serial.print("start!!");
+		SQLserverConnect();
+		Serial.println("Starting task, update DB");
+		displayClear();
+		Serial.print("start task!!");
+		//SQL start
+		//row_values *row = NULL;
+		//char taskID
+		delay(500);
+		Serial.println("SQL query to start task");
+		// Initiate the query class instance
+		MySQL_Cursor *cur_mem1 = new MySQL_Cursor(&conn);
+		sprintf(query, QUERY_STARTTIME, taskID);
+		// Execute the query
+		delay(500);
+		Serial.println("sql to upload start time");
+		cur_mem1->execute(query);
+		// SQL end
+		Serial.println("done upload");
+		delay(500);
+		sprintf(query, QUERY_UPDATE_2, taskID);
+		// Execute the query
+		delay(500);
+		Serial.println("sql to update status");
+		cur_mem1->execute(query);
+		// SQL end
+		Serial.println("done upload");
+		delay(500);
+		//delete cur_mem;
+		conn.close();
+		delay(500);
+		
 		buzzerFunction(2);
-		taposNa = 2;
+		
+			if(nh < 10) display.print(F(" ")); display.print(nh);  display.print(F(":"));          // print the hour 
+			if(nm < 10) display.print(F("0")); display.print(nm);  display.print(F(":"));          // print the minute
+			if(ns < 10) display.print(F("0")); display.print(ns);                       // print the second
+			display.print(F(" - "));                                        // Local date
+			if(nmo < 10) display.print(F("0")); display.print(nmo);  display.print(F("/"));        // print the month
+			if(ndy < 10) display.print(F("0")); display.print(ndy); display.print(F("/"));                   // print the day
+			if(nyr < 10) display.print(F("0")); display.print(nyr);          // print the year
+			display.println();
+			Serial.println("print time");
+			display.print("Sew Line #: ");
+			display.print(taskID);
+			display.print("\n");
+			display.print("Start time : ");
+			if(nh < 10) display.print(F(" ")); display.print(nh);  display.print(F(":"));          // print the hour 
+			if(nm < 10) display.print(F("0")); display.print(nm);  display.print(F(":"));          // print the minute
+			if(ns < 10) display.print(F("0")); display.print(ns);
+			display.print("\n");
+			display.print("<Task Done>");
+			display.display();
+		
+		Serial.print("starting loop to wait to finish task");
+		for (int tempTimer = 0;tempTimer <= 3;tempTimer++)  {
+			buttonState1 = digitalRead(startButton);
+			delay(100);
+			if (buttonState1 == HIGH){
+				tempTimer = 0;
+			}
+		}
+		
+		Serial.print("done task!!");
+		displayClear();
+		display.print("\n");
+		display.print("       Task Done \n");
+		display.print("  Requesting new task \n");
+		display.display();
+
+		SQLserverConnect();
+		//SQL start
+		//row_values *row = NULL;
+		//char taskID
+		delay(500);
+		Serial.println("SQL query to start task");
+		// Initiate the query class instance
+		MySQL_Cursor *cur_mem2 = new MySQL_Cursor(&conn);
+		sprintf(query, QUERY_ENDTIME, taskID);
+		// Execute the query
+		cur_mem2->execute(query);
+		delay(1000);
+		sprintf(query, QUERY_UPDATE_3, taskID);
+		// Execute the query
+		cur_mem2->execute(query);
+		delay(1000);
+		//delete cur_mem;
+		// SQL end
+		buzzerFunction(2);
+		conn.close();
+		TNLeaveLoop = 2;
 	}
 	if (buttonState1 == HIGH && buttonState2 == LOW){
+		//SQL start
+		//row_values *row = NULL;
+		//char taskID
+		SQLserverConnect();
+		delay(500);
+		Serial.println("SQL query to cancel task");
+		// Initiate the query class instance
+		MySQL_Cursor *cur_mem3 = new MySQL_Cursor(&conn);
+		sprintf(query, QUERY_UPDATE_5, taskID);
+		// Execute the query
+		cur_mem3->execute(query);
+		//delete cur_mem;
+		// SQL end
+		conn.close();
 		Serial.print("cancel!! \n");
-		Serial.print("task should auto assign");
+		Serial.print("task should auto assign. \n");
 		buzzerFunction(4);
-		taposNa = 2;	
+		TNLeaveLoop = 2;	
+		cellLocation = 0;
+		taskID = 0;
+		delay(200);
+		displayClear();
 	}
 	if (countToMinute > 1200 ){
 			displayClear();
@@ -442,16 +579,34 @@ while (taposNa < 1) {
 			display.print(MinLeft);
 			display.print("\n");
 			display.print("START           END");
+			display.display();
+			
 			MinLeft--;
 			countToMinute = 0;
-			display.display();
 			Serial.print("function to update DB, timeout");
 			buzzerFunction(5);
 	}
 	if (countToFifteen > 18000 ){
 		Serial.print("function to update DB, 15mins have past, auto assign");
-		buzzerFunction(5);
-		taposNa = 2;	
+		//SQL start
+		//row_values *row = NULL;
+		//char taskID
+		SQLserverConnect();
+		delay(500);
+		// Initiate the query class instance
+		MySQL_Cursor *cur_mem3 = new MySQL_Cursor(&conn);
+		sprintf(query, QUERY_UPDATE_6, taskID);
+		// Execute the query
+		cur_mem3->execute(query);
+		//delete cur_mem;
+		// SQL end
+		conn.close();
+		buzzerFunction(4);
+		TNLeaveLoop = 2;	
+		cellLocation = 0;
+		taskID = 0;
+		delay(200);
+		displayClear();
 	}
 
 	Serial.print(countToFifteen);
@@ -459,13 +614,15 @@ while (taposNa < 1) {
 	countToMinute++;
 	delay(50);
 	
-	Serial.print("value of taposNa: ");
-	Serial.println(taposNa);
+	Serial.print("value of TNLeaveLoop: ");
+	Serial.println(TNLeaveLoop);
 	Serial.println(buttonState1);
 	Serial.println(buttonState2);
 	
 }
+
   	Serial.println("out of loop");
+	displayClear();
 	
 //reset button state
 buttonState1 = 1;
@@ -474,6 +631,7 @@ buttonState2 = 1;
   //sleep for 1min
   //ESP.deepSleep(60000000);
   delayer(60);
+  	ESP.restart();
   
 }
 
@@ -488,6 +646,7 @@ int delayer(int dly){
 int displayClear() {
 display.clearDisplay();
 display.setCursor(0,0);
+display.display();
 }
 
 int buzzerFunction(int counter){
@@ -522,4 +681,16 @@ unsigned long sendNTPpacket(IPAddress& address){
   udp.beginPacket(address, 123); //NTP requests are to port 123
   udp.write(packetBuffer, NTP_PACKET_SIZE);
   udp.endPacket();
+}
+
+int SQLserverConnect() {
+	int ResetCounter = 0;
+while (conn.connect(server_addr, 3306, user, password) != true) {
+	delay(800);
+    Serial.print( "." );
+    Serial.print(ResetCounter);
+    ResetCounter++;
+	
+    }
+	Serial.print( "connected!" );
 }
