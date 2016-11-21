@@ -27,6 +27,9 @@ const int cancelButton = D7;
 int buttonState1 = 1;
 int buttonState2 = 1;
 
+//mbdc Machine Break Down Code
+int mbdc = 0;
+int EmpCd = 0;
 
 void setup() {
 	
@@ -112,9 +115,12 @@ void loop(){
 		
 		ClearLCD();
 		lcd.setCursor(0,0);
-		lcd.print("Emp# : 1234");
+		lcd.print("Emp# : ");
+		lcd.setCursor(8,0);
+		lcd.print(EmpCd);
 		lcd.setCursor(0,1);
-		lcd.print("Brkdwn Tp : P1");
+		lcd.print("Brkdwn Cd : P");
+		lcd.print(mbdc);
 		delay (2000);
 		
 			while (TNLeaveLoop < 1) {
