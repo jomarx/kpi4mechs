@@ -32,25 +32,25 @@ void loop() {
   Serial.println("\n");
   
 	if (potVal > 100 && potVal < 286) {mbdc=1;}
-	if (potVal > 297 && potVal < 323) {mbdc=2;}
-	if (potVal > 334 && potVal < 360) {mbdc=3;}
-	if (potVal > 371 && potVal < 397) {mbdc=4;}
-	if (potVal > 408 && potVal < 434) {mbdc=5;}
-	if (potVal > 445 && potVal < 471) {mbdc=6;}
-	if (potVal > 482 && potVal < 508) {mbdc=7;}
-	if (potVal > 519 && potVal < 545) {mbdc=8;}
-	if (potVal > 556 && potVal < 582) {mbdc=9;}
-	if (potVal > 593 && potVal < 619) {mbdc=10;}
-	if (potVal > 630 && potVal < 656) {mbdc=11;}
-	if (potVal > 667 && potVal < 693) {mbdc=12;}
-	if (potVal > 704 && potVal < 730) {mbdc=13;}
-	if (potVal > 741 && potVal < 767) {mbdc=14;}
-	if (potVal > 778 && potVal < 804) {mbdc=15;}
-	if (potVal > 815 && potVal < 841) {mbdc=16;}
-	if (potVal > 852 && potVal < 878) {mbdc=17;}
-	if (potVal > 889 && potVal < 915) {mbdc=18;}
-	if (potVal > 926 && potVal < 952) {mbdc=19;}
-	if (potVal > 963 && potVal < 989) {mbdc=20;}
+	else if (potVal > 297 && potVal < 323) {mbdc=2;}
+	else if (potVal > 334 && potVal < 360) {mbdc=3;}
+	else if (potVal > 371 && potVal < 397) {mbdc=4;}
+	else if (potVal > 408 && potVal < 434) {mbdc=5;}
+	else if (potVal > 445 && potVal < 471) {mbdc=6;}
+	else if (potVal > 482 && potVal < 508) {mbdc=7;}
+	else if (potVal > 519 && potVal < 545) {mbdc=8;}
+	else if (potVal > 556 && potVal < 582) {mbdc=9;}
+	else if (potVal > 593 && potVal < 619) {mbdc=10;}
+	else if (potVal > 630 && potVal < 656) {mbdc=11;}
+	else if (potVal > 667 && potVal < 693) {mbdc=12;}
+	else if (potVal > 704 && potVal < 730) {mbdc=13;}
+	else if (potVal > 741 && potVal < 767) {mbdc=14;}
+	else if (potVal > 778 && potVal < 804) {mbdc=15;}
+	else if (potVal > 815 && potVal < 841) {mbdc=16;}
+	else if (potVal > 852 && potVal < 878) {mbdc=17;}
+	else if (potVal > 889 && potVal < 915) {mbdc=18;}
+	else if (potVal > 926 && potVal < 952) {mbdc=19;}
+	else if (potVal > 963 && potVal < 989) {mbdc=20;}
 	
 	Serial.print("P");
 	Serial.print(mbdc);

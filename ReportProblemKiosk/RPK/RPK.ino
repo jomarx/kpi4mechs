@@ -31,6 +31,10 @@ int buttonState2 = 1;
 int mbdc = 0;
 int EmpCd = 0;
 
+//potentiometer selector
+int potPin = A0;
+int potVal = 0;       // variable to store the potValue coming from the sensor
+
 void setup() {
 	
 	pinMode(startButton, INPUT_PULLUP);
@@ -70,6 +74,7 @@ void setup() {
   lcd.print("Kiosk by JM");
   delay(3000);
   buzzerFunction(3);
+  
 }
 
 void loop(){
@@ -77,20 +82,21 @@ void loop(){
   receivedTag=false;
   int TNLeaveLoop = 0;
   int countToFifteen = 0;
+  int tempTimer = 0;
 
 	delay (100);
     Serial.println("Start loop");  
 	ClearLCD();
-	lcd.print("Waiting for User");
-	Serial.println("Reading from RFID");
+	lcd.print("Please Scan ID");
 	
-  if (rfidReader.available() > 0){
+	//Reading from RFID
+if (rfidReader.available() > 0){
     int BytesRead = rfidReader.readBytesUntil(3, tagNumber, 15);//EOT (3) is the last character in tag 
     receivedTag=true;
 	buzzerFunction(1);
     Serial.println("Got a tag");    
 	rfidReader.flush(); 
-  }
+}
 	
   	
   if (receivedTag){
@@ -114,7 +120,7 @@ void loop(){
 		delay(3000);
 		
 		ClearLCD();
-		lcd.setCursor(0,0);
+		//put Emp# check here
 		lcd.print("Emp# : ");
 		lcd.setCursor(8,0);
 		lcd.print(EmpCd);
@@ -126,7 +132,29 @@ void loop(){
 			while (TNLeaveLoop < 1) {
 				buttonState1 = digitalRead(startButton);
 				buttonState2 = digitalRead(cancelButton);
+				potVal = analogRead(potPin);    // read the potValue from the sensor
 				
+				if (potVal > 100 && potVal < 286) {mbdc=1;}
+				else if (potVal > 297 && potVal < 323) {mbdc=2;}
+				else if (potVal > 334 && potVal < 360) {mbdc=3;}
+				else if (potVal > 371 && potVal < 397) {mbdc=4;}
+				else if (potVal > 408 && potVal < 434) {mbdc=5;}
+				else if (potVal > 445 && potVal < 471) {mbdc=6;}
+				else if (potVal > 482 && potVal < 508) {mbdc=7;}
+				else if (potVal > 519 && potVal < 545) {mbdc=8;}
+				else if (potVal > 556 && potVal < 582) {mbdc=9;}
+				else if (potVal > 593 && potVal < 619) {mbdc=10;}
+				else if (potVal > 630 && potVal < 656) {mbdc=11;}
+				else if (potVal > 667 && potVal < 693) {mbdc=12;}
+				else if (potVal > 704 && potVal < 730) {mbdc=13;}
+				else if (potVal > 741 && potVal < 767) {mbdc=14;}
+				else if (potVal > 778 && potVal < 804) {mbdc=15;}
+				else if (potVal > 815 && potVal < 841) {mbdc=16;}
+				else if (potVal > 852 && potVal < 878) {mbdc=17;}
+				else if (potVal > 889 && potVal < 915) {mbdc=18;}
+				else if (potVal > 926 && potVal < 952) {mbdc=19;}
+				else if (potVal > 963 && potVal < 989) {mbdc=20;}
+							
 				if (buttonState1 == LOW && buttonState2 == HIGH){
 					    Serial.print("Start");
 						ClearLCD();
@@ -156,10 +184,18 @@ void loop(){
 					TNLeaveLoop = 2;	
 					delay(3000);
 					ESP.restart();
-	}
-				delay(50);
+				}
+				delay(100);
 				Serial.print(countToFifteen);
 				countToFifteen++;
+				
+				ClearLCD();
+				lcd.print("Emp# : ");
+				lcd.setCursor(8,0);
+				lcd.print(EmpCd);
+				lcd.setCursor(0,1);
+				lcd.print("Brkdwn Cd : P");
+				lcd.print(mbdc);
 			}
 	
     } else {
