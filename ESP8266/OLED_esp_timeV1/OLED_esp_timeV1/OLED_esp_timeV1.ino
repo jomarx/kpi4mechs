@@ -419,6 +419,7 @@ buzzerFunction(1);
 
 int TNLeaveLoop = 0;
 int countToFifteen = 0;
+long countToFifteenAgain = 0;
 int countToMinute = 0;
 int MinLeft = 15;
 
@@ -507,6 +508,16 @@ while (TNLeaveLoop < 1) {
 			if (buttonState1 == HIGH){
 				tempTimer = 0;
 			}
+			if (countToFifteenAgain > 150){
+				buzzerFunction(2);
+				countToFifteenAgain = 0;
+			}
+			if (countToMinute > 10){
+				buzzerFunction(2);
+				countToMinute = 0;
+			}
+			countToFifteenAgain++;
+			countToMinute++;
 		}
 		
 		Serial.print("done task!!");
@@ -521,7 +532,7 @@ while (TNLeaveLoop < 1) {
 		//row_values *row = NULL;
 		//char taskID
 		delay(500);
-		Serial.println("SQL query to start task");
+		Serial.println("SQL query after finishing task");
 		// Initiate the query class instance
 		MySQL_Cursor *cur_mem2 = new MySQL_Cursor(&conn);
 		sprintf(query, QUERY_ENDTIME, taskID);

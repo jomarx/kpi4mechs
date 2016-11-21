@@ -19,6 +19,7 @@ http://afterhoursengineering.net/blog/blog/2015/04/11/esp8266-read-and-write-dat
 http://stackoverflow.com/questions/20933327/arduino-control-led-via-wifi-based-on-mysql-database-value
 https://primalcortex.wordpress.com/2015/02/19/esp8266-logging-data-in-a-mysql-database/
 http://www.whatimade.today/esp8266-easiest-way-to-program-so-far/
+http://forum.arduino.cc/index.php?topic=434653.0
 
 //arduino button press
 http://www.instructables.com/id/Arduino-Stopwatch/
@@ -42,7 +43,7 @@ SET col_name1=expr1 [, col_name2=expr2 ...]
 UPDATE kpi_mech.task_db SET Status = 2 WHERE ID = 1;
 
 *udate time
-UPDATE kpi_mech.task_db SET StartTime (Curtime()) WHERE ID = 1;
+UPDATE kpi_mech.task_db SET StartTime = (Curtime()) WHERE ID = %lu;
 
 
 

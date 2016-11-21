@@ -2,6 +2,8 @@
 KPI for Mechanics
 
 RFID :
- * HYS = 
+ * HYS = 125khz
  * HYN = 125khz
  * Phubai = 125khz
+ 
+ 

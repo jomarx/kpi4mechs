@@ -3,3 +3,9 @@ http://www.instructables.com/id/Scure-Lock-With-RFID-Tag-and-PIN/
 http://www.instructables.com/id/RFID-Controlled-Door/
 http://www.instructables.com/id/Arduino-RFID-Reader-MFRC522-Turorial/
 http://www.instructables.com/id/WiFi-RFID-Reader/
+https://github.com/hacklabnobo/esp8266_rfid/blob/master/RDM6300Test/RDM6300Test.ino
+
+*i2c LCD
+http://www.14core.com/wiring-i2c-module-on-16x2-lcd-with-sclsda/
+http://www.14core.com/wiring-nodemcu-esp8266-12e-with-i2c-16x2-lcd-screen/
+http://www.instructables.com/id/Using-a-Nodemcu-Devkit-esp8266-to-Display-Temperat/?ALLSTEPS
