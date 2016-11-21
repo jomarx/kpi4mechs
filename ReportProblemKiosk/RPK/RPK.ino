@@ -18,11 +18,26 @@ const char* password = "maquinay1";
 //rfid tag
 int validRFID = 7754087;
 
+//buzzer
+const int buzzer = D8;
+
+//button
+const int startButton = D6;
+const int cancelButton = D7;
+int buttonState1 = 1;
+int buttonState2 = 1;
+
+
 void setup() {
+	
+	pinMode(startButton, INPUT_PULLUP);
+	pinMode(cancelButton, INPUT_PULLUP);
+	
   delay(1000);
   pinMode(D1, OUTPUT);
-  Serial.begin(9600);
   rfidReader.begin(9600); // the RDM6300 runs at 9600bps
+  Serial.begin(9600);
+
   Serial.println("\n\n\nRFID Reader...ready!");
   
   // We start by connecting to a WiFi network
@@ -50,24 +65,31 @@ void setup() {
   lcd.print("Report Problem");
   lcd.setCursor(0,1);
   lcd.print("Kiosk by JM");
+  delay(3000);
+  buzzerFunction(3);
 }
 
 void loop(){
 	
   receivedTag=false;
+  int TNLeaveLoop = 0;
+  int countToFifteen = 0;
 
+	delay (100);
     Serial.println("Start loop");  
-	lcd.clear();
-	lcd.setCursor(0,0);
+	ClearLCD();
 	lcd.print("Waiting for User");
-  
+	Serial.println("Reading from RFID");
+	
   if (rfidReader.available() > 0){
-    Serial.println("Reading from RFID");
     int BytesRead = rfidReader.readBytesUntil(3, tagNumber, 15);//EOT (3) is the last character in tag 
     receivedTag=true;
+	buzzerFunction(1);
     Serial.println("Got a tag");    
+	rfidReader.flush(); 
   }
-
+	
+  	
   if (receivedTag){
     tagString=tagNumber;
     
@@ -81,25 +103,62 @@ void loop(){
     Serial.println(result);
     
     if (validRFID == result) {
-      Serial.println("RFID is allowed");
-      digitalWrite(2, HIGH);   // turn the LED on by making the voltage HIGH
-      delay(3000);             // wait for a second
-      digitalWrite(2, LOW);    // turn the LED off by making the voltage LOW
+      Serial.println("RFID allowed");
 	  
 	  //LCD
-		lcd.clear();
-		lcd.setCursor(0,0);
-		lcd.print("RFID is allowed");
+		ClearLCD();
+		lcd.print("RFID allowed");
 		delay(3000);
-		  lcd.setCursor(0,0);
-		  lcd.print("Emp# : 1234");
-		  lcd.setCursor(0,1);
-		  lcd.print("Brkdwn Tp : P1");
 		
+		ClearLCD();
+		lcd.setCursor(0,0);
+		lcd.print("Emp# : 1234");
+		lcd.setCursor(0,1);
+		lcd.print("Brkdwn Tp : P1");
+		delay (2000);
+		
+			while (TNLeaveLoop < 1) {
+				buttonState1 = digitalRead(startButton);
+				buttonState2 = digitalRead(cancelButton);
+				
+				if (buttonState1 == LOW && buttonState2 == HIGH){
+					    Serial.print("Start");
+						ClearLCD();
+						lcd.setCursor(0,0);
+						lcd.print("Starting!");
+						TNLeaveLoop = 2;
+						delay (2000);
+				}
+				
+				if (buttonState1 == HIGH && buttonState2 == LOW){
+						Serial.print("Cancel");
+						ClearLCD();
+						lcd.setCursor(0,0);
+						lcd.print("Cancel!");
+						TNLeaveLoop = 2;
+						delay (2000);
+				}
+				
+				if (countToFifteen > 18000 ){
+					Serial.print("Timout Resetting");
+					ClearLCD();
+					lcd.print("Task Timeout");
+					lcd.setCursor(0,1);
+					lcd.print("Resetting");
+					
+					buzzerFunction(4);
+					TNLeaveLoop = 2;	
+					delay(3000);
+					ESP.restart();
+	}
+				delay(50);
+				Serial.print(countToFifteen);
+				countToFifteen++;
+			}
+	
     } else {
       Serial.println("RFID is not allowed");
-		lcd.clear();
-		lcd.setCursor(0,0);
+		ClearLCD();
 		lcd.print("RFID is not allowed");
     }
     
@@ -125,4 +184,18 @@ unsigned long hex2int(char *a, unsigned int len)
         val += (a[i]-55)*(1<<(4*(len-1-i)));
 
     return val;
+}
+
+void ClearLCD() {
+	lcd.clear();
+	lcd.setCursor(0,0);
+}
+
+int buzzerFunction(int counter){
+  for (int buzzerTimer = 1; buzzerTimer <= counter; buzzerTimer++){
+  tone(buzzer, 5000); // Send 5KHz sound signal...
+  delay(100);        // ...for .1 sec
+  noTone(buzzer);     // Stop sound...
+  delay(100);        // ...for .1sec
+  }
 }
