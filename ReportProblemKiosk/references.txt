@@ -32,3 +32,13 @@ insert into kpi_mech.mbcode_db (id, details) values ('1','THREAD SKIP, BROKEN ST
 ('18','WIRE BURNED MOTOR'),
 ('19','ELECTRICAL PROBLEM'),
 ('20','OTHER');
+
+#SQL find RFID tag
+SELECT ID, location FROM kpi_mech.task_db WHERE Assignee = 'jomar' AND Status = %lu ORDER BY Severity ASC limit 1;
+SELECT EmpNo FROM kpi_mech.user_db WHERE rfid = %lu;
+SELECT EmpNo FROM kpi_mech.user_db WHERE rfid = 7754087;
+
+#SQL insert new task
+insert into kpi_mech.task_db (EmpNo, Status, details) values (49,0,0);
+
+INSERT INTO `kpi_mech`.`task_db` (`ID`, `EmpNo`, `Severity`, `StartTime`, `EndTime`, `StartDate`, `EndDate`, `location`, `Assignee`, `Status`, `recorded`, `details`) VALUES (NULL, '49', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, CURRENT_TIMESTAMP, '0');

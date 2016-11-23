@@ -249,6 +249,7 @@ while (conn.connect(server_addr, 3306, user, password) != true) {
     Serial.print(ResetCounter);
     ResetCounter++;
     if (ResetCounter >= 60) {
+		Serial.print("SQL cannot connect");
 		Serial.print("ESP8266 reset!");
 		ESP.restart();
       }

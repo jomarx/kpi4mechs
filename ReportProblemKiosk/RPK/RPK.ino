@@ -3,6 +3,26 @@
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
 
+//SQL read
+#include <WiFiClient.h>
+#include <MySQL_Connection.h>
+#include <MySQL_Cursor.h>
+
+//IPAddress server_addr(192,168,143,132); // IP of the MySQL server here
+IPAddress server_addr(192,168,42,85); // IP of the MySQL server here
+char user[] = "nodemcu1"; // MySQL user login username
+char spassword[] = "secret"; // MySQL user login password
+
+// Sample query
+//char query[] = "SELECT population FROM world.city WHERE name = 'New York'";
+char QUERY_POP[] = "SELECT ID, location FROM kpi_mech.task_db WHERE Assignee = 'jomar' AND Status = %lu ORDER BY Severity ASC limit 1; ";
+char QUERY_EMPID[] = "SELECT EmpNo, location FROM kpi_mech.user_db WHERE rfid = %lu; ";
+char QUERY_INSERT[] = "insert into kpi_mech.task_db (EmpNo, Status, details, location) values (%d, 0, %d, %d);";
+char query[256];
+
+WiFiClient client;
+MySQL_Connection conn((Client *)&client);
+
 //LCD
 LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
@@ -13,7 +33,7 @@ char realTagNum[12];
 boolean receivedTag;
 
 const char* ssid = "jomarAP-SP";
-const char* password = "maquinay1";
+const char* wpassword = "maquinay1";
 
 //rfid tag
 int validRFID = 7754087;
@@ -36,12 +56,9 @@ int potPin = A0;
 int potVal = 0;       // variable to store the potValue coming from the sensor
 
 void setup() {
-	
-	pinMode(startButton, INPUT_PULLUP);
-	pinMode(cancelButton, INPUT_PULLUP);
-	
+
   delay(1000);
-  pinMode(D1, OUTPUT);
+  //pinMode(D1, OUTPUT);
   rfidReader.begin(9600); // the RDM6300 runs at 9600bps
   Serial.begin(9600);
 
@@ -49,20 +66,31 @@ void setup() {
   
   // We start by connecting to a WiFi network
   Serial.println();
-  Serial.println();
+ /* 
+  ClearLCD();
+  lcd.setCursor(0,0);
+  lcd.print("Connecting to ");
+  lcd.setCursor(0,1);
+  lcd.print("WIFI");
+  */
   Serial.print("Connecting to ");
   Serial.println(ssid);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
+  WiFi.begin(ssid, wpassword);
+
+  int ResetCounter = 0;
+while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
-  }
+    Serial.print(ResetCounter);
+	  Serial.println(WiFi.status());
+    ResetCounter++;
+    if (ResetCounter >= 30) {
+		Serial.print("\n");
+		Serial.print("ESP8266 reset!");
+		ESP.restart();
+      }
+}
 
-  Serial.println("");
-  Serial.println("WiFi connected");  
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-  
   //LCD init
   lcd.init();                      // initialize the lcd 
   lcd.init();
@@ -74,7 +102,43 @@ void setup() {
   lcd.print("Kiosk by JM");
   delay(3000);
   buzzerFunction(3);
+
+	pinMode(startButton, INPUT_PULLUP);
+	pinMode(cancelButton, INPUT_PULLUP);
+
+  Serial.println("");
+  Serial.println("WiFi connected");  
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  ClearLCD();
+  lcd.setCursor(0,0);
+  lcd.print("WiFi connected");
+  lcd.setCursor(0,1);
+  lcd.print(WiFi.localIP());
+  delay(1000);
   
+  Serial.println("DB - Connecting...");
+  
+  ResetCounter = 0;
+while (conn.connect(server_addr, 3306, user, spassword) != true) {
+	delay(800);
+    Serial.print( "." );
+    Serial.print(ResetCounter);
+    ResetCounter++;
+    if (ResetCounter >= 60) {
+		Serial.print("ESP8266 reset!");
+		ESP.restart();
+		}
+    }
+  
+  ClearLCD();
+  lcd.setCursor(0,0);
+  lcd.print("SQL connected");
+  delay(2000);
+	ClearLCD();
+	lcd.print("Please Scan ID");
+
 }
 
 void loop(){
@@ -83,11 +147,11 @@ void loop(){
   int TNLeaveLoop = 0;
   int countToFifteen = 0;
   int tempTimer = 0;
+  int cellLocation = 0;
 
 	delay (100);
     Serial.println("Start loop");  
-	ClearLCD();
-	lcd.print("Please Scan ID");
+
 	
 	//Reading from RFID
 if (rfidReader.available() > 0){
@@ -111,7 +175,37 @@ if (rfidReader.available() > 0){
     
     Serial.println(result);
     
-    if (validRFID == result) {
+	delay(500);
+	row_values *row = NULL;
+	Serial.println("SQL query to search for RFID");
+	// Initiate the query class instance
+	MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
+	sprintf(query, QUERY_EMPID, result);
+	// Execute the query
+	cur_mem->execute(query);
+	// Fetch the columns (required) but we don't use them.
+	column_names *columns = cur_mem->get_columns();
+	// Read the row (we are only expecting the one)
+	
+		ClearLCD();
+		lcd.print("Checking ID Tag");
+	
+	do {
+		row = cur_mem->get_next_row();
+		if (row != NULL) {
+			EmpCd = atol(row->values[0]);
+			Serial.print("value of Emp ID = ");
+			Serial.println(EmpCd);
+			cellLocation = atol(row->values[1]);
+			Serial.print("value of cellLocation = ");
+			Serial.println(cellLocation);
+		}
+	} while (row != NULL);
+	// Deleting the cursor also frees up memory used
+	//delete cur_mem;
+	//conn.close();
+	
+    if (EmpCd != 0) {
       Serial.println("RFID allowed");
 	  
 	  //LCD
@@ -122,7 +216,7 @@ if (rfidReader.available() > 0){
 		ClearLCD();
 		//put Emp# check here
 		lcd.print("Emp# : ");
-		lcd.setCursor(8,0);
+		lcd.setCursor(7,0);
 		lcd.print(EmpCd);
 		lcd.setCursor(0,1);
 		lcd.print("Brkdwn Cd : P");
@@ -155,13 +249,34 @@ if (rfidReader.available() > 0){
 				else if (potVal > 926 && potVal < 952) {mbdc=19;}
 				else if (potVal > 963 && potVal < 989) {mbdc=20;}
 							
-				if (buttonState1 == LOW && buttonState2 == HIGH){
+				if (buttonState1 == LOW && buttonState2 == HIGH) {
 					    Serial.print("Start");
+							
+						//SQL start
+						//row_values *row = NULL;
+						//char taskID
+						delay(500);
+						Serial.println("SQL query sending task");
+						// Initiate the query class instance
+						MySQL_Cursor *cur_mem2 = new MySQL_Cursor(&conn);
+						sprintf(query, QUERY_INSERT, EmpCd, mbdc, cellLocation);
+						// Execute the query
+						cur_mem2->execute(query);
+						delay(500);
+						//delete cur_mem;
+						// SQL end
+						
 						ClearLCD();
-						lcd.setCursor(0,0);
-						lcd.print("Starting!");
+						lcd.print("Sending data");
+						lcd.setCursor(0,1);
+						lcd.print("Thanks you!");
 						TNLeaveLoop = 2;
 						delay (2000);
+						result = 0;
+						mbdc = 0;
+						EmpCd = 0;
+						ClearLCD();
+						lcd.print("Please Scan ID");
 				}
 				
 				if (buttonState1 == HIGH && buttonState2 == LOW){
@@ -171,6 +286,11 @@ if (rfidReader.available() > 0){
 						lcd.print("Cancel!");
 						TNLeaveLoop = 2;
 						delay (2000);
+						result = 0;
+						mbdc = 0;
+						EmpCd = 0;
+						ClearLCD();
+						lcd.print("Please Scan ID");
 				}
 				
 				if (countToFifteen > 18000 ){
@@ -185,10 +305,12 @@ if (rfidReader.available() > 0){
 					delay(3000);
 					ESP.restart();
 				}
+				
 				delay(100);
 				Serial.print(countToFifteen);
 				countToFifteen++;
 				
+				if (TNLeaveLoop == 0) {
 				ClearLCD();
 				lcd.print("Emp# : ");
 				lcd.setCursor(8,0);
@@ -196,12 +318,17 @@ if (rfidReader.available() > 0){
 				lcd.setCursor(0,1);
 				lcd.print("Brkdwn Cd : P");
 				lcd.print(mbdc);
+				}
+				
 			}
 	
     } else {
       Serial.println("RFID is not allowed");
 		ClearLCD();
-		lcd.print("RFID is not allowed");
+		lcd.print("ID is not allowed");
+		delay(3000);
+		ClearLCD();
+		lcd.print("Please Scan ID");
     }
     
     memset(tagNumber,0,sizeof(tagNumber)); //erase tagNumber
