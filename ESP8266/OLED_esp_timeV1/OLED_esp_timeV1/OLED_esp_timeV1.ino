@@ -104,13 +104,16 @@ char password[] = "secret"; // MySQL user login password
 
 // Sample query
 //char query[] = "SELECT population FROM world.city WHERE name = 'New York'";
-char QUERY_POP[] = "SELECT ID, location FROM kpi_mech.task_db WHERE Assignee = 'jomar' AND Status = %lu ORDER BY Severity ASC limit 1; ";
+char QUERY_POP[] = "SELECT ID, location FROM kpi_mech.task_db WHERE Assignee = %d AND Status = 1 ORDER BY Severity ASC limit 1; ";
 char QUERY_UPDATE_2[] = "UPDATE kpi_mech.task_db SET Status = 2 WHERE ID = %lu; ";
 char QUERY_UPDATE_3[] = "UPDATE kpi_mech.task_db SET Status = 3 WHERE ID = %lu; ";
 char QUERY_UPDATE_5[] = "UPDATE kpi_mech.task_db SET Status = 5 WHERE ID = %lu; ";
 char QUERY_UPDATE_6[] = "UPDATE kpi_mech.task_db SET Status = 6 WHERE ID = %lu; ";
 char QUERY_STARTTIME[] = "UPDATE kpi_mech.task_db SET StartTime = (Curtime()) WHERE ID = %lu; ";
 char QUERY_ENDTIME[] = "UPDATE kpi_mech.task_db SET EndTime = (Curtime()) WHERE ID = %lu; ";
+char QUERY_AVAILABLE[] = "UPDATE kpi_mech.mech_db SET status = 0 WHERE empID = %d; ";
+char QUERY_CANCELLED[] = "insert into kpi_mech.cancel_db (taskID, mech, date, time) values (%d, %d, CURDATE(), Curtime()); ";
+char QUERY_TIMEOUT[] = "insert into kpi_mech.timeout_db (taskID, mech, date, time) values (%d, %d, CURDATE(), Curtime()); ";
 char query[256];
 
 //SQL variables
@@ -173,7 +176,8 @@ const int cancelButton = D7;
 int buttonState1 = 1;
 int buttonState2 = 1;
 
-
+//mechanic ID
+int mechanicID = 49;
 
 void setup(){  
 
@@ -181,14 +185,6 @@ pinMode(startButton, INPUT_PULLUP);
 pinMode(cancelButton, INPUT_PULLUP);
 
 //  Serial.begin(9600);
-display.begin(SSD1306_SWITCHCAPVCC);
-display.display();
-delayer(1);
-display.clearDisplay();
-display.setTextSize(1);
-display.setTextColor(WHITE);
-
-displayClear();
 
 //buzzer initialize
 buzzerFunction(3);
@@ -197,10 +193,6 @@ buzzerFunction(3);
 Serial.begin(115200);
 Serial.println();
 Serial.println();
-
-displayClear();
-display.print("connecting to WIFI..\n");
-display.display();
 
 // We start by connecting to a WiFi network
 Serial.print("Connecting to ");
@@ -218,6 +210,14 @@ while (WiFi.status() != WL_CONNECTED) {
 		ESP.restart();
       }
 }
+
+display.begin(SSD1306_SWITCHCAPVCC);
+display.display();
+delayer(1);
+display.clearDisplay();
+display.setTextSize(1);
+display.setTextColor(WHITE);
+displayClear();
   
 Serial.println("");
 
@@ -230,6 +230,7 @@ display.display();
 Serial.println("WiFi connected");
 Serial.println("IP address: ");
 Serial.println(WiFi.localIP());
+delayer(2);
 
 Serial.println("Starting UDP");
 udp.begin(localPort);
@@ -370,7 +371,7 @@ MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
 // to allocate one buffer for all formatted queries or allocate the
 // memory as needed (just make sure you allocate enough memory and
 // free it when you're done!).
-sprintf(query, QUERY_POP, 1);
+sprintf(query, QUERY_POP, mechanicID);
 // Execute the query
 cur_mem->execute(query);
 // Fetch the columns (required) but we don't use them.
@@ -505,18 +506,25 @@ while (TNLeaveLoop < 1) {
 		Serial.print("starting loop to wait to finish task");
 		for (int tempTimer = 0;tempTimer <= 3;tempTimer++)  {
 			buttonState1 = digitalRead(startButton);
-			delay(100);
+			delay(200);
 			if (buttonState1 == HIGH){
 				tempTimer = 0;
 			}
-			if (countToFifteenAgain > 150){
+			if (countToFifteenAgain > 4500){
 				buzzerFunction(2);
 				countToFifteenAgain = 0;
 			}
-			if (countToMinute > 10){
-				buzzerFunction(2);
+			if (countToMinute > 300){
+				buzzerFunction(1);
 				countToMinute = 0;
 			}
+			Serial.print("countToMinute : ");
+			Serial.print(countToMinute);
+			Serial.print("\n");
+			Serial.print("countToFifteenAgain : ");
+			Serial.print(countToFifteenAgain);
+			Serial.print("\n");
+			
 			countToFifteenAgain++;
 			countToMinute++;
 		}
@@ -539,11 +547,14 @@ while (TNLeaveLoop < 1) {
 		sprintf(query, QUERY_ENDTIME, taskID);
 		// Execute the query
 		cur_mem2->execute(query);
-		delay(1000);
+		delay(500);
 		sprintf(query, QUERY_UPDATE_3, taskID);
 		// Execute the query
 		cur_mem2->execute(query);
-		delay(1000);
+		delay(500);
+		sprintf(query, QUERY_AVAILABLE, mechanicID);
+		Serial.println("sql to update mech availability");
+		cur_mem2->execute(query);
 		//delete cur_mem;
 		// SQL end
 		buzzerFunction(2);
@@ -563,6 +574,10 @@ while (TNLeaveLoop < 1) {
 		// Execute the query
 		cur_mem3->execute(query);
 		//delete cur_mem;
+		delay(500);
+		sprintf(query, QUERY_CANCELLED, taskID, mechanicID);
+		// Execute the query
+		cur_mem3->execute(query);
 		// SQL end
 		conn.close();
 		Serial.print("cancel!! \n");
@@ -595,11 +610,11 @@ while (TNLeaveLoop < 1) {
 			
 			MinLeft--;
 			countToMinute = 0;
-			Serial.print("function to update DB, timeout");
+			//Serial.print("function to update DB, timeout");
 			buzzerFunction(5);
 	}
 	if (countToFifteen > 18000 ){
-		Serial.print("function to update DB, 15mins have past, auto assign");
+		Serial.println("function to update DB, 15mins have past, auto assign");
 		//SQL start
 		//row_values *row = NULL;
 		//char taskID
@@ -608,6 +623,10 @@ while (TNLeaveLoop < 1) {
 		// Initiate the query class instance
 		MySQL_Cursor *cur_mem3 = new MySQL_Cursor(&conn);
 		sprintf(query, QUERY_UPDATE_6, taskID);
+		// Execute the query
+		cur_mem3->execute(query);
+		delay(500);
+		sprintf(query, QUERY_TIMEOUT, taskID, mechanicID);
 		// Execute the query
 		cur_mem3->execute(query);
 		//delete cur_mem;

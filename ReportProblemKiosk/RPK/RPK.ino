@@ -163,7 +163,7 @@ void loop(){
 	Serial.print(" / ");
 	Serial.print(countToloop); 
 	Serial.print(" \n ");
-	lcd.noBacklight();
+	//lcd.noBacklight();
 
 	
 	//Reading from RFID
@@ -361,7 +361,9 @@ if (rfidReader.available() > 0){
   
   if (countToTwo > 120 ){
 	
-	buzzerFunction(3);
+	buzzerFunction(2);
+	ClearLCD();
+	lcd.print("Task AutoAssign");
 	
 	//SQL start
 		SQLserverConnect();	
@@ -419,6 +421,10 @@ if (rfidReader.available() > 0){
 		sprintf(query, QUERY_UPDATEMECH, mechID);
 			cur_mem5->execute(query);
 			Serial.println("mech_db updated!");
+			
+			ClearLCD();
+			lcd.print("Task Assigned");
+			delay(1000);
 			
 		} else {
 			Serial.println("No available mech!");

@@ -46,6 +46,14 @@ UPDATE kpi_mech.task_db SET Status = 2 WHERE ID = 1;
 UPDATE kpi_mech.task_db SET StartTime = (Curtime()) WHERE ID = %lu;
 
 
+*update cancelled time
+insert into kpi_mech.cancel_db (taskID, mech, date, time) values (%d, %d, CURDATE(), Curtime());
+insert into kpi_mech.cancel_db (taskID, mech, date, time) values (1, 1, CURDATE(), Curtime());
+
+*update timeout time
+insert into kpi_mech.timeout_db (taskID, mech, date, time) values (%d, %d, CURDATE(), Curtime());
+insert into kpi_mech.timeout_db (taskID, mech, date, time) values (1, 1, CURDATE(), Curtime());
+
 
 INSERT INTO kpi_mech.task_db (message) VALUES ('Hello, Arduino!')
 

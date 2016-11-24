@@ -18,8 +18,8 @@ $servername = "192.168.42.85";
 $username = "nodemcu1";
 $password = "secret";
 $dbname = "kpi_mech";
-$style1 = "<td style = 'wlocationth: 150px; border: 4px solid black; background-color: #ff6666'>";//format if StartTime exceed $limit in minutes
-$style2 = "<td style = 'wlocationth: 150px; border: 4px solid black; background-color: #ffffff'>";//format otherwise
+$style1 = "<td style = 'wlocationth: 150px; border: 4px solid black; background-color: #ff6666'; font-size:'40px'>";//format if StartTime exceed $limit in minutes
+$style2 = "<td style = 'wlocationth: 150px; border: 4px solid black; background-color: #ffffff'; font-size:'40px'>";//format otherwise
 $limit = 15;
 
 try {
@@ -30,11 +30,13 @@ try {
 		die("Connection failed: " . $conn->connect_error);
 	}
 	//Stat connection
-	$sql = "SELECT location, Assignee, StartTime, EndTime, details FROM task_db WHERE status < 5";
+	$sql = "SELECT location, Assignee, StartTime, EndTime, details FROM task_db WHERE status < 3";
 	$result = $conn->query($sql);
 	if ($result->num_rows > 0) {
+		echo "<span style='font-size: 32pt'>";
 		echo "<table style='border:4px solid black; width: 100%'>";
-		echo "<tr><th>Location</th><th>Assignee</th><th>StartTime</th><th>EndTime</th><th>Job Code</th></tr>";
+		//echo "<font size='30'>";
+		echo "<tr><th>Location</th><th>Assignee</th><th>StartTime</th><th>EndTime</th><th>Breakdown Type</th></tr>";
 		// output data of each row
 		while($row = $result->fetch_assoc())
 		{
@@ -51,6 +53,7 @@ try {
 			echo $style.$row["details"]."</td>";
 			echo "</tr>";
     		}
+		echo "</span>";
 		echo "</table>";
 	} else {
     		echo "No results";

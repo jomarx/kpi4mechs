@@ -44,10 +44,13 @@ insert into kpi_mech.task_db (EmpNo, Status, details) values (49,0,0);
 INSERT INTO `kpi_mech`.`task_db` (`ID`, `EmpNo`, `Severity`, `StartTime`, `EndTime`, `StartDate`, `EndDate`, `location`, `Assignee`, `Status`, `recorded`, `details`) VALUES (NULL, '49', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, CURRENT_TIMESTAMP, '0');
 
 #find unassigned task
-SELECT ID FROM kpi_mech.task_db WHERE Status = 0 limit 1;
-taskID = ID
-UPDATE kpi_mech.task_db SET Status = 1 Assignee = '%d' WHERE ID = %d;
-UPDATE kpi_mech.task_db SET Status = 1, Assignee = %d WHERE ID = %d;
+char QUERY_EMPID[] = "SELECT EmpNo, location FROM kpi_mech.user_db WHERE rfid = %lu; ";
+char QUERY_INSERT[] = "insert into kpi_mech.task_db (EmpNo, Status, details, location) values (%d, 0, %d, %d);";
+char QUERY_FNDTASK[] = "SELECT ID FROM kpi_mech.task_db WHERE Status = %d limit 1; ";
+char QUERY_FINDMECH[] = "SELECT empID FROM kpi_mech.mech_db WHERE status = %d limit 1 ; ";
+char QUERY_UPDATEMECH[] = "UPDATE kpi_mech.mech_db SET status = 1 WHERE empID = %d; ";
+char QUERY_UPDATETASK[] = "UPDATE kpi_mech.task_db SET Status = 1, Assignee = %d WHERE ID = %d; ";
+char query[350];
 
 
 #find cancelled task
