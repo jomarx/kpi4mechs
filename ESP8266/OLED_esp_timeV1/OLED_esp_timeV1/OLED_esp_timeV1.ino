@@ -190,7 +190,7 @@ pinMode(cancelButton, INPUT_PULLUP);
 buzzerFunction(3);
 
 //start NTP
-Serial.begin(115200);
+Serial.begin(9600);
 Serial.println();
 Serial.println();
 
@@ -436,7 +436,7 @@ if(ndy < 10) display.print(F("0")); display.print(ndy); display.print(F("/"));  
 if(nyr < 10) display.print(F("0")); display.print(nyr);          // print the year
 display.println();
 display.print("Sew Line #: ");
-display.print(taskID);
+display.print(cellLocation);
 display.print("\n");
 display.print("ACK Time left : ");
 display.print(MinLeft);
@@ -578,6 +578,10 @@ while (TNLeaveLoop < 1) {
 		sprintf(query, QUERY_CANCELLED, taskID, mechanicID);
 		// Execute the query
 		cur_mem3->execute(query);
+		delay(500);
+		sprintf(query, QUERY_AVAILABLE, mechanicID);
+		Serial.println("sql to update mech availability");
+		cur_mem3->execute(query);
 		// SQL end
 		conn.close();
 		Serial.print("cancel!! \n");
@@ -628,6 +632,10 @@ while (TNLeaveLoop < 1) {
 		delay(500);
 		sprintf(query, QUERY_TIMEOUT, taskID, mechanicID);
 		// Execute the query
+		cur_mem3->execute(query);
+		delay(500);
+		sprintf(query, QUERY_AVAILABLE, mechanicID);
+		Serial.println("sql to update mech availability");
 		cur_mem3->execute(query);
 		//delete cur_mem;
 		// SQL end

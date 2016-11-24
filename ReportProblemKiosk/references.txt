@@ -56,14 +56,15 @@ char query[350];
 #find cancelled task
 SELECT ID FROM kpi_mech.task_db WHERE Status = 5 limit 1;
 SELECT mech FROM kpi_mech.timeout_db WHERE taskID = %d;    //find who timeout
-SELECT empID FROM kpi_mech.mech_db WHERE status = 0 limit 1 ;
+SELECT empID FROM kpi_mech.mech_db WHERE status = 0 AND empID != 49 limit 1 ;
+SELECT empID FROM kpi_mech.mech_db WHERE status = 0 AND empID != %d limit 1 ;
 UPDATE kpi_mech.task_db SET Status = 1 Assignee = '%d' WHERE ID = %d;
 
 
 #find timeout task
 SELECT ID FROM kpi_mech.task_db WHERE Status = 6 limit 1;
 SELECT mech FROM kpi_mech.cancel_db WHERE taskID = %d;		//find not cancelled
-SELECT empID FROM kpi_mech.mech_db WHERE status = 0 AND mech NOT %d limit 1 ;
+SELECT empID FROM kpi_mech.mech_db WHERE status = 0 AND mech != %d limit 1 ;
 UPDATE kpi_mech.task_db SET Status = 1 Assignee = '%d' WHERE ID = %d;
 
 

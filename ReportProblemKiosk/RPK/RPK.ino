@@ -17,7 +17,10 @@ char spassword[] = "secret"; // MySQL user login password
 char QUERY_EMPID[] = "SELECT EmpNo, location FROM kpi_mech.user_db WHERE rfid = %lu; ";
 char QUERY_INSERT[] = "insert into kpi_mech.task_db (EmpNo, Status, details, location) values (%d, 0, %d, %d);";
 char QUERY_FNDTASK[] = "SELECT ID FROM kpi_mech.task_db WHERE Status = %d limit 1; ";
+char QUERY_FNDCTASK[] = "SELECT mech FROM kpi_mech.cancel_db WHERE taskID = %d; ";
+char QUERY_FNDTTASK[] = "SELECT mech FROM kpi_mech.timeout_db WHERE taskID = %d; ";
 char QUERY_FINDMECH[] = "SELECT empID FROM kpi_mech.mech_db WHERE status = %d limit 1 ; ";
+char QUERY_FINDCMECH[] = "SELECT empID FROM kpi_mech.mech_db WHERE status = 0 AND empID != %d limit 1 ; ";
 char QUERY_UPDATEMECH[] = "UPDATE kpi_mech.mech_db SET status = 1 WHERE empID = %d; ";
 char QUERY_UPDATETASK[] = "UPDATE kpi_mech.task_db SET Status = 1, Assignee = %d WHERE ID = %d; ";
 char query[350];
@@ -62,6 +65,9 @@ int countToTwo = 0;
 
 //ESP reset timeout
 int countToloop = 0;
+
+//selector assign
+int AssignSelect = 0;
 
 void setup() {
 
@@ -359,12 +365,14 @@ if (rfidReader.available() > 0){
 
   delay(400);
   
-  if (countToTwo > 120 ){
+  if (countToTwo > 120 && AssignSelect == 0 ){
 	
 	buzzerFunction(2);
 	ClearLCD();
 	lcd.print("Task AutoAssign");
-	
+	lcd.setCursor(0,1);
+	lcd.print("New Task");
+		
 	//SQL start
 		SQLserverConnect();	
 		int taskID = 0;
@@ -390,6 +398,8 @@ if (rfidReader.available() > 0){
 		Serial.println(taskID);
 		}
 	} while (row != NULL);
+	
+	if (taskID != 0) {
 	
 		delay(500);	
 		MySQL_Cursor *cur_mem4 = new MySQL_Cursor(&conn);
@@ -436,8 +446,239 @@ if (rfidReader.available() > 0){
 	//cur_mem4->execute(query);
 	delay(100);
 	//conn.close();
-	countToTwo = 0;
+	//countToTwo = 0;
 	}
+		ClearLCD();
+		lcd.print("Please Scan ID");
+		AssignSelect = 1;
+	
+	}
+	
+	//find cancelled task and auto assign
+	 if (countToTwo > 240 && AssignSelect == 1){
+	
+	buzzerFunction(2);
+	ClearLCD();
+	lcd.print("Task AutoAssign");
+	lcd.setCursor(0,1);
+	lcd.print("Cancelled Task");
+	
+	//SQL start
+		SQLserverConnect();	
+		int taskID = 0;
+		int mechID = 0;
+		int CmechID = 0;
+		//char taskID
+		delay(500);
+		row_values *row = NULL;
+		MySQL_Cursor *cur_mem31 = new MySQL_Cursor(&conn);
+		Serial.println("SQL query finding cancelled task");
+		// Initiate the query class instance
+		sprintf(query, QUERY_FNDTASK, 5);
+		// Execute the query
+			cur_mem31->execute(query);
+		// Fetch the columns (required) but we don't use them.
+	
+		column_names *columns = cur_mem31->get_columns();
+	
+	do {
+	row = cur_mem31->get_next_row();
+		if (row != NULL) {
+		taskID = atol(row->values[0]);
+		Serial.print("value of taskID = ");
+		Serial.println(taskID);
+		}
+	} while (row != NULL);
+	
+		if (taskID != 0) {
+	
+			delay(500);
+		//row_values *row = NULL;
+		MySQL_Cursor *cur_mem312 = new MySQL_Cursor(&conn);
+		Serial.println("SQL query finding cancelled task");
+		// Initiate the query class instance
+		sprintf(query, QUERY_FNDCTASK, taskID);
+		// Execute the query
+			cur_mem312->execute(query);
+		// Fetch the columns (required) but we don't use them.
+	
+		column_names *column = cur_mem312->get_columns();
+	
+	do {
+	row = cur_mem312->get_next_row();
+		if (row != NULL) {
+		CmechID = atol(row->values[0]);
+		Serial.print("value of CmechID = ");
+		Serial.println(CmechID);
+		}
+	} while (row != NULL);
+	
+		delay(500);	
+		MySQL_Cursor *cur_mem4 = new MySQL_Cursor(&conn);
+		Serial.println("SQL query finding available mech NOT CmechID");
+		sprintf(query, QUERY_FINDCMECH, CmechID);
+			cur_mem4->execute(query);
+		
+		column_names *column1 = cur_mem4->get_columns();
+			
+		do {
+			row = cur_mem4->get_next_row();
+			if (row != NULL) {
+				mechID = atol(row->values[0]);
+				Serial.print("value of mechID = ");
+				Serial.println(mechID);
+			}
+		} while (row != NULL);
+	
+		delay(500);
+				
+		if (mechID != 0) {
+			MySQL_Cursor *cur_mem5 = new MySQL_Cursor(&conn);
+		Serial.println("SQL query updating task");
+		// Initiate the query class instance
+		sprintf(query, QUERY_UPDATETASK, mechID, taskID);
+			cur_mem5->execute(query);
+			Serial.println("task_db updated!");
+		delay(500);
+		sprintf(query, QUERY_UPDATEMECH, mechID);
+			cur_mem5->execute(query);
+			Serial.println("mech_db updated!");
+			
+			ClearLCD();
+			lcd.print("Task Assigned");
+			delay(1000);
+			
+		} else {
+			Serial.println("No available mech!");
+		delay(500);
+		}
+	
+	//sprintf(query, QUERY_EMPID, taskID);
+	// Execute the query
+	//cur_mem4->execute(query);
+	delay(100);
+	//conn.close();
+	//countToTwo = 0;
+		}
+		
+		ClearLCD();
+		lcd.print("Please Scan ID");
+		AssignSelect = 2;
+	
+	}
+	
+	//find timeout task
+	if (countToTwo > 460 && AssignSelect == 2){
+	
+	buzzerFunction(2);
+	ClearLCD();
+	lcd.print("Task AutoAssign");
+	lcd.setCursor(0,1);
+	lcd.print("Timeout Task");
+	
+	//SQL start
+		SQLserverConnect();	
+		int taskID = 0;
+		int mechID = 0;
+		int TmechID = 0;
+		//char taskID
+		delay(500);
+		row_values *row = NULL;
+		MySQL_Cursor *cur_mem31 = new MySQL_Cursor(&conn);
+		Serial.println("SQL query finding timeout task");
+		// Initiate the query class instance
+		sprintf(query, QUERY_FNDTASK, 6);
+		// Execute the query
+			cur_mem31->execute(query);
+		// Fetch the columns (required) but we don't use them.
+	
+		column_names *columns1 = cur_mem31->get_columns();
+	
+	do {
+	row = cur_mem31->get_next_row();
+		if (row != NULL) {
+		taskID = atol(row->values[0]);
+		Serial.print("value of taskID = ");
+		Serial.println(taskID);
+		}
+	} while (row != NULL);
+	
+		if (taskID != 0) {
+			delay(500);
+		//row_values *row = NULL;
+		MySQL_Cursor *cur_mem312 = new MySQL_Cursor(&conn);
+		Serial.println("SQL query finding Timeout task");
+		// Initiate the query class instance
+		sprintf(query, QUERY_FNDTTASK, taskID);
+		// Execute the query
+			cur_mem312->execute(query);
+		// Fetch the columns (required) but we don't use them.
+	
+		column_names *column2 = cur_mem312->get_columns();
+	
+	do {
+	row = cur_mem312->get_next_row();
+		if (row != NULL) {
+		TmechID = atol(row->values[0]);
+		Serial.print("value of TmechID = ");
+		Serial.println(TmechID);
+		}
+	} while (row != NULL);
+	
+		delay(500);	
+		MySQL_Cursor *cur_mem4 = new MySQL_Cursor(&conn);
+		Serial.println("SQL query finding available mech NOT TmechID");
+		sprintf(query, QUERY_FINDCMECH, TmechID);
+			cur_mem4->execute(query);
+		
+		column_names *column12 = cur_mem4->get_columns();
+			
+		do {
+			row = cur_mem4->get_next_row();
+			if (row != NULL) {
+				mechID = atol(row->values[0]);
+				Serial.print("value of mechID = ");
+				Serial.println(mechID);
+			}
+		} while (row != NULL);
+	
+		delay(500);
+				
+		if (mechID != 0) {
+			MySQL_Cursor *cur_mem5 = new MySQL_Cursor(&conn);
+		Serial.println("SQL query updating task");
+		// Initiate the query class instance
+		sprintf(query, QUERY_UPDATETASK, mechID, taskID);
+			cur_mem5->execute(query);
+			Serial.println("task_db updated!");
+		delay(500);
+		sprintf(query, QUERY_UPDATEMECH, mechID);
+			cur_mem5->execute(query);
+			Serial.println("mech_db updated!");
+			
+			ClearLCD();
+			lcd.print("Task Assigned");
+			delay(1000);
+			
+		} else {
+			Serial.println("No available mech!");
+		delay(500);
+		}
+		}
+	//sprintf(query, QUERY_EMPID, taskID);
+	// Execute the query
+	//cur_mem4->execute(query);
+	delay(100);
+	//conn.close();
+	
+		ClearLCD();
+		lcd.print("Please Scan ID");
+		countToTwo = 0;
+		AssignSelect = 0;
+	
+	}
+	
+	
 	
 	countToTwo++;
 	
