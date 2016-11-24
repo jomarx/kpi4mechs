@@ -42,3 +42,28 @@ SELECT EmpNo FROM kpi_mech.user_db WHERE rfid = 7754087;
 insert into kpi_mech.task_db (EmpNo, Status, details) values (49,0,0);
 
 INSERT INTO `kpi_mech`.`task_db` (`ID`, `EmpNo`, `Severity`, `StartTime`, `EndTime`, `StartDate`, `EndDate`, `location`, `Assignee`, `Status`, `recorded`, `details`) VALUES (NULL, '49', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, CURRENT_TIMESTAMP, '0');
+
+#find unassigned task
+SELECT ID FROM kpi_mech.task_db WHERE Status = 0 limit 1;
+taskID = ID
+UPDATE kpi_mech.task_db SET Status = 1 Assignee = '%d' WHERE ID = %d;
+UPDATE kpi_mech.task_db SET Status = 1, Assignee = %d WHERE ID = %d;
+
+
+#find cancelled task
+SELECT ID FROM kpi_mech.task_db WHERE Status = 5 limit 1;
+SELECT mech FROM kpi_mech.timeout_db WHERE taskID = %d;    //find who timeout
+SELECT empID FROM kpi_mech.mech_db WHERE status = 0 limit 1 ;
+UPDATE kpi_mech.task_db SET Status = 1 Assignee = '%d' WHERE ID = %d;
+
+
+#find timeout task
+SELECT ID FROM kpi_mech.task_db WHERE Status = 6 limit 1;
+SELECT mech FROM kpi_mech.cancel_db WHERE taskID = %d;		//find not cancelled
+SELECT empID FROM kpi_mech.mech_db WHERE status = 0 AND mech NOT %d limit 1 ;
+UPDATE kpi_mech.task_db SET Status = 1 Assignee = '%d' WHERE ID = %d;
+
+
+#find finished task
+SELECT ID FROM kpi_mech.task_db WHERE Status = 3 ASC limit 1;
+UPDATE kpi_mech.task_db SET Status = 4 WHERE ID = %d;

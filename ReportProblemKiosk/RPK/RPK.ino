@@ -14,11 +14,13 @@ char user[] = "nodemcu1"; // MySQL user login username
 char spassword[] = "secret"; // MySQL user login password
 
 // Sample query
-//char query[] = "SELECT population FROM world.city WHERE name = 'New York'";
-char QUERY_POP[] = "SELECT ID, location FROM kpi_mech.task_db WHERE Assignee = 'jomar' AND Status = %lu ORDER BY Severity ASC limit 1; ";
 char QUERY_EMPID[] = "SELECT EmpNo, location FROM kpi_mech.user_db WHERE rfid = %lu; ";
 char QUERY_INSERT[] = "insert into kpi_mech.task_db (EmpNo, Status, details, location) values (%d, 0, %d, %d);";
-char query[256];
+char QUERY_FNDTASK[] = "SELECT ID FROM kpi_mech.task_db WHERE Status = %d limit 1; ";
+char QUERY_FINDMECH[] = "SELECT empID FROM kpi_mech.mech_db WHERE status = %d limit 1 ; ";
+char QUERY_UPDATEMECH[] = "UPDATE kpi_mech.mech_db SET status = 1 WHERE empID = %d; ";
+char QUERY_UPDATETASK[] = "UPDATE kpi_mech.task_db SET Status = 1, Assignee = %d WHERE ID = %d; ";
+char query[350];
 
 WiFiClient client;
 MySQL_Connection conn((Client *)&client);
@@ -54,6 +56,12 @@ int EmpCd = 0;
 //potentiometer selector
 int potPin = A0;
 int potVal = 0;       // variable to store the potValue coming from the sensor
+
+//int count check for auto assign
+int countToTwo = 0;
+
+//ESP reset timeout
+int countToloop = 0;
 
 void setup() {
 
@@ -142,28 +150,36 @@ while (conn.connect(server_addr, 3306, user, spassword) != true) {
 }
 
 void loop(){
-	
+
   receivedTag=false;
   int TNLeaveLoop = 0;
-  int countToFifteen = 0;
+  int countToFive = 0;
   int tempTimer = 0;
   int cellLocation = 0;
 
 	delay (100);
-    Serial.println("Start loop");  
+    Serial.print("Start loop / "); 
+	Serial.print(countToTwo); 
+	Serial.print(" / ");
+	Serial.print(countToloop); 
+	Serial.print(" \n ");
+	lcd.noBacklight();
 
 	
 	//Reading from RFID
 if (rfidReader.available() > 0){
-    int BytesRead = rfidReader.readBytesUntil(3, tagNumber, 15);//EOT (3) is the last character in tag 
+    	int BytesRead = rfidReader.readBytesUntil(3, tagNumber, 15);//EOT (3) is the last character in tag 
     receivedTag=true;
 	buzzerFunction(1);
-    Serial.println("Got a tag");    
+	Serial.println("Got a tag");    
 	rfidReader.flush(); 
 }
 	
   	
   if (receivedTag){
+	  
+	MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
+	SQLserverConnect();	
     tagString=tagNumber;
     
     Serial.println();
@@ -179,14 +195,15 @@ if (rfidReader.available() > 0){
 	row_values *row = NULL;
 	Serial.println("SQL query to search for RFID");
 	// Initiate the query class instance
-	MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
+	//MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
 	sprintf(query, QUERY_EMPID, result);
 	// Execute the query
 	cur_mem->execute(query);
 	// Fetch the columns (required) but we don't use them.
 	column_names *columns = cur_mem->get_columns();
 	// Read the row (we are only expecting the one)
-	
+		
+		lcd.backlight();
 		ClearLCD();
 		lcd.print("Checking ID Tag");
 	
@@ -254,6 +271,7 @@ if (rfidReader.available() > 0){
 							
 						//SQL start
 						//row_values *row = NULL;
+						SQLserverConnect();
 						//char taskID
 						delay(500);
 						Serial.println("SQL query sending task");
@@ -264,6 +282,7 @@ if (rfidReader.available() > 0){
 						cur_mem2->execute(query);
 						delay(500);
 						//delete cur_mem;
+						//conn.close();
 						// SQL end
 						
 						ClearLCD();
@@ -293,7 +312,7 @@ if (rfidReader.available() > 0){
 						lcd.print("Please Scan ID");
 				}
 				
-				if (countToFifteen > 18000 ){
+				if (countToFive > 6000 ){
 					Serial.print("Timout Resetting");
 					ClearLCD();
 					lcd.print("Task Timeout");
@@ -307,8 +326,8 @@ if (rfidReader.available() > 0){
 				}
 				
 				delay(100);
-				Serial.print(countToFifteen);
-				countToFifteen++;
+				Serial.print(countToFive);
+				countToFive++;
 				
 				if (TNLeaveLoop == 0) {
 				ClearLCD();
@@ -338,7 +357,101 @@ if (rfidReader.available() > 0){
     }
   }
 
-  delay(500);
+  delay(400);
+  
+  if (countToTwo > 120 ){
+	
+	buzzerFunction(3);
+	
+	//SQL start
+		SQLserverConnect();	
+		int taskID = 0;
+		int mechID = 0;
+		//char taskID
+		delay(500);
+		row_values *row = NULL;
+		MySQL_Cursor *cur_mem3 = new MySQL_Cursor(&conn);
+		Serial.println("SQL query finding new task");
+		// Initiate the query class instance
+		sprintf(query, QUERY_FNDTASK, 0);
+		// Execute the query
+			cur_mem3->execute(query);
+		// Fetch the columns (required) but we don't use them.
+	
+		column_names *columns = cur_mem3->get_columns();
+	
+	do {
+	row = cur_mem3->get_next_row();
+		if (row != NULL) {
+		taskID = atol(row->values[0]);
+		Serial.print("value of taskID = ");
+		Serial.println(taskID);
+		}
+	} while (row != NULL);
+	
+		delay(500);	
+		MySQL_Cursor *cur_mem4 = new MySQL_Cursor(&conn);
+		Serial.println("SQL query finding available mech");
+		sprintf(query, QUERY_FINDMECH, 0);
+			cur_mem4->execute(query);
+		
+		column_names *column = cur_mem4->get_columns();
+			
+		do {
+			row = cur_mem4->get_next_row();
+			if (row != NULL) {
+				mechID = atol(row->values[0]);
+				Serial.print("value of mechID = ");
+				Serial.println(mechID);
+			}
+		} while (row != NULL);
+	
+		delay(500);
+				
+		if (mechID != 0) {
+			MySQL_Cursor *cur_mem5 = new MySQL_Cursor(&conn);
+		Serial.println("SQL query updating task");
+		// Initiate the query class instance
+		sprintf(query, QUERY_UPDATETASK, mechID, taskID);
+			cur_mem5->execute(query);
+			Serial.println("task_db updated!");
+		delay(500);
+		sprintf(query, QUERY_UPDATEMECH, mechID);
+			cur_mem5->execute(query);
+			Serial.println("mech_db updated!");
+			
+		} else {
+			Serial.println("No available mech!");
+		delay(500);
+		}
+	
+	//sprintf(query, QUERY_EMPID, taskID);
+	// Execute the query
+	//cur_mem4->execute(query);
+	delay(100);
+	//conn.close();
+	countToTwo = 0;
+	}
+	
+	countToTwo++;
+	
+	delay(100);
+	
+	if (countToloop > 600 ){ 
+		Serial.print("IDLE Resetting");
+		ClearLCD();
+		lcd.print("IDLE Timeout");
+		lcd.setCursor(0,1);
+		lcd.print("Resetting");
+
+		buzzerFunction(4);
+		delay(2000);
+		ESP.restart();
+	
+	}
+	
+	countToloop++;
+  
 }
 
 unsigned long hex2int(char *a, unsigned int len)
@@ -367,4 +480,16 @@ int buzzerFunction(int counter){
   noTone(buzzer);     // Stop sound...
   delay(100);        // ...for .1sec
   }
+}
+
+int SQLserverConnect() {
+	int ResetCounter = 0;
+while (conn.connect(server_addr, 3306, user, spassword) != true) {
+	delay(800);
+    Serial.print( "." );
+    Serial.print(ResetCounter);
+    ResetCounter++;
+	
+    }
+	Serial.println( "connected again!" );
 }
