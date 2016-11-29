@@ -11,15 +11,17 @@ $sec = "10";
 
 <?php
 echo "<center>";
+echo "<span style='font-size: 25pt'>";
 echo date("m/d/Y H:i:s");
-echo "</center>";
+echo "</span>";
+
 
 $servername = "192.168.42.85";
 $username = "nodemcu1";
 $password = "secret";
 $dbname = "kpi_mech";
-$style1 = "<td style = 'wlocationth: 150px; border: 4px solid black; background-color: #ff6666'; font-size:'40px'>";//format if StartTime exceed $limit in minutes
-$style2 = "<td style = 'wlocationth: 150px; border: 4px solid black; background-color: #ffffff'; font-size:'40px'>";//format otherwise
+$style1 = "<td style = 'wlocationth: 150px; border: 4px solid black; background-color: #ff6666; font-size: 40px; ' align='center'>";//format if StartTime exceed $limit in minutes
+$style2 = "<td style = 'wlocationth: 150px; border: 4px solid black; background-color: #ffffff; font-size: 40px; ' align='center'>";//format otherwise
 $limit = 15;
 
 try {
@@ -29,14 +31,15 @@ try {
 	if ($conn->connect_error) {
 		die("Connection failed: " . $conn->connect_error);
 	}
-	//Stat connection
-	$sql = "SELECT location, Assignee, StartTime, EndTime, details FROM task_db WHERE status < 3";
+	//Start connection
+	$sql = "SELECT location, kp.ShortName, StartTime, EndTime, kpi.details FROM task_db t JOIN kpi_mech.mbcode_db kpi on t.details=kpi.id JOIN kpi_mech.mech_db kp on t.Assignee=kp.empID WHERE t.status < 3";
 	$result = $conn->query($sql);
 	if ($result->num_rows > 0) {
-		echo "<span style='font-size: 32pt'>";
+		echo "<span style='font-size: 25pt'>";
 		echo "<table style='border:4px solid black; width: 100%'>";
 		//echo "<font size='30'>";
 		echo "<tr><th>Location</th><th>Assignee</th><th>StartTime</th><th>EndTime</th><th>Breakdown Type</th></tr>";
+		echo "</span>";
 		// output data of each row
 		while($row = $result->fetch_assoc())
 		{
@@ -47,14 +50,15 @@ try {
 			else{$style=$style2;}
 			echo "<tr>";
 			echo $style.$row["location"]."</td>";
-			echo $style.$row["Assignee"]."</td>";
+			echo $style.$row["ShortName"]."</td>";
 			echo $style.$row["StartTime"]."</td>";
 			echo $style.$row["EndTime"]."</td>";
 			echo $style.$row["details"]."</td>";
 			echo "</tr>";
     		}
-		echo "</span>";
+		
 		echo "</table>";
+		echo "</center>";
 	} else {
     		echo "No results";
 	}

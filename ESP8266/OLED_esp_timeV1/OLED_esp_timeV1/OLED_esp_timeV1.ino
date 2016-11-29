@@ -493,7 +493,7 @@ while (TNLeaveLoop < 1) {
 			display.println();
 			Serial.println("print time");
 			display.print("Sew Line #: ");
-			display.print(taskID);
+			display.print(cellLocation);
 			display.print("\n");
 			display.print("Start time : ");
 			if(nh < 10) display.print(F(" ")); display.print(nh);  display.print(F(":"));          // print the hour 
@@ -604,7 +604,7 @@ while (TNLeaveLoop < 1) {
 			if(nyr < 10) display.print(F("0")); display.print(nyr);          // print the year
 			display.println();
 			display.print("Sew Line #: ");
-			display.print(taskID);
+			display.print(cellLocation);
 			display.print("\n");
 			display.print("ACK Time left : ");
 			display.print(MinLeft);
