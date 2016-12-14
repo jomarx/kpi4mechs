@@ -263,7 +263,8 @@ display.display();
 void loop(){
 //NTP start
 //get a random server from the pool
-WiFi.hostByName(ntpServerName, timeServerIP); 
+//WiFi.hostByName(ntpServerName, timeServerIP); 
+IPAddress timeServerIP(192, 168, 42, 85);
 
 sendNTPpacket(timeServerIP); // send an NTP packet to a time server
 // wait to see if a reply is available
